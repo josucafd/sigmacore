@@ -1,4 +1,5 @@
 import { Plugin } from '@nocobase/server';
+import { QueryTypes } from 'sequelize';
 import path from 'path';
 
 export class KanbanServer extends Plugin {
@@ -51,7 +52,7 @@ export class KanbanServer extends Plugin {
 
             // Executar a query SQL
             const results = await db.sequelize.query(query, {
-              type: db.sequelize.QueryTypes.SELECT,
+              type: QueryTypes.SELECT,
             });
 
             // Transformar os dados para o formato esperado pelo kanban
@@ -108,7 +109,7 @@ export class KanbanServer extends Plugin {
             `;
 
             await db.sequelize.query(updateQuery, {
-              type: db.sequelize.QueryTypes.UPDATE,
+              type: QueryTypes.UPDATE,
               replacements: {
                 weekDay,
                 id: filterByTk,
