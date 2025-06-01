@@ -65,7 +65,7 @@ export const Column: React.FC<ColumnProps> = ({
           <div className="kanban-column-empty">
             <div className="kanban-column-empty-content">
               <span className="kanban-column-empty-text">
-                Nenhuma ordem programada para {title.toLowerCase()}
+                Nenhuma programação para {title.toLowerCase()}
               </span>
               {isOver && (
                 <span className="kanban-column-drop-hint">

@@ -27,7 +27,7 @@ export const OverdueLane: React.FC = () => {
           <div className="kanban-column-title-section">
             <h3 className="kanban-column-title" style={{ color: '#cf1322' }}>
               <CalendarOutlined style={{ marginRight: '6px' }} />
-              Atrasados
+              Atrasadas
             </h3>
             <span className="kanban-column-count" style={{ backgroundColor: '#fff2f0', color: '#cf1322', borderColor: '#ffccc7' }}>
               {overdueCards.length}
@@ -49,7 +49,7 @@ export const OverdueLane: React.FC = () => {
               <div className="kanban-column-empty-content">
                 <Empty
                   image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description="Nenhuma ordem em atraso"
+                  description="Nenhuma programação em atraso"
                 />
               </div>
             </div>

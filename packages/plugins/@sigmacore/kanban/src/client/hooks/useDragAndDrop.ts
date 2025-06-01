@@ -77,7 +77,7 @@ export const useDragAndDrop = ({ weekNavigation, moveCard, onSuccess, onError }:
       console.error('❌ Erro durante movimentação:', error);
       
       if (onError) {
-        onError(`Erro ao reprogramar ordem ${finalOrderId}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+        onError(`Erro ao reprogramar programação ${finalOrderId}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
       }
     }
   };

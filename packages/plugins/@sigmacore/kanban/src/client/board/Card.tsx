@@ -9,7 +9,7 @@ export interface CardProps {
 }
 
 export const Card: React.FC<CardProps> = ({ data }) => {
-  const { ref, opInterna, opCliente, qtd, status, produto, priority, imageUrl, weekDay } = data;
+  const { ref, opInterna, opCliente, qtd, status, produto, priority, imageUrl, weekDay, tipoOp } = data;
   const { movingCards, movedCards } = useKanbanBlockContext();
 
   // Verificar estados visuais
@@ -140,7 +140,7 @@ export const Card: React.FC<CardProps> = ({ data }) => {
   ];
 
   const handleMenuClick = ({ key }: { key: string }) => {
-    console.log(`Ação ${key} para ordem ${ref} (ID: ${data.id})`);
+    console.log(`Ação ${key} para programação ${ref} (ID: ${data.id})`);
     // Aqui você pode implementar as ações
   };
 
@@ -243,6 +243,9 @@ export const Card: React.FC<CardProps> = ({ data }) => {
               <p>Op Interna: <span className="detail-value-adapted">{opInterna || '-'}</span></p>
               {opCliente && (
                 <p>Op Cliente: <span className="detail-value-adapted">{opCliente}</span></p>
+              )}
+              {tipoOp && (
+                <p>Tipo OP: <span className="detail-value-adapted">{tipoOp}</span></p>
               )}
               {qtd && (
                 <p>Qtd: <span className="detail-value-adapted">{qtd.toLocaleString()}</span></p>

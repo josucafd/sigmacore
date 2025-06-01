@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useMemo, useEffect, useCall
 import { useAPIClient } from '@nocobase/client';
 import { useWeekNavigation } from './hooks/useWeekNavigation';
 
-// Tipos de dados da tabela production_orders
+// Tipos de dados da tabela tb_programacoes
 export interface ProductionOrder {
   id: string | number;
   ref: string;
@@ -12,6 +12,7 @@ export interface ProductionOrder {
   status: any; // Campo JSON pode ter diferentes formatos
   weekDay: string;
   produto: string;
+  tipoOp?: string; // Novo campo do tipo de operação
   priority: 'high' | 'normal' | 'low';
   imageUrl?: string;
   createdAt?: string;
@@ -101,39 +102,42 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return false;
   }, []);
 
-  // Função para buscar dados da API
+  // Função para buscar dados da API usando a nova rota
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
       const response = await api.request({
-        url: 'production_orders:list',
+        url: 'kanban_programacoes:list', // Nova rota que usa a query SQL personalizada
         method: 'GET',
         params: {
           paginate: false, // Buscar todos os registros
         },
       });
       
-      console.log('🔄 Dados recebidos da API:', response.data);
+      console.log('🔄 Dados recebidos da API (programações):', response.data);
       console.log('🔍 Detalhes dos IDs recebidos:', response.data?.data?.map(order => ({
         id: order.id,
         type: typeof order.id,
         ref: order.ref,
-        weekDay: order.weekDay
+        weekDay: order.weekDay,
+        tipoOp: order.tipoOp
       })));
       
       if (response?.data?.data) {
         const orders = response.data.data;
-        console.log(`📊 Carregando ${orders.length} ordens na memória`);
+        console.log(`📊 Carregando ${orders.length} programações na memória`);
         
         // Log dos primeiros registros para debug
         orders.slice(0, 3).forEach(order => {
-          console.log(`📋 Ordem exemplo:`, {
+          console.log(`📋 Programação exemplo:`, {
             id: order.id,
             idType: typeof order.id,
             ref: order.ref,
-            weekDay: order.weekDay
+            weekDay: order.weekDay,
+            tipoOp: order.tipoOp,
+            status: order.status
           });
         });
         
@@ -146,8 +150,8 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
         setData([]);
       }
     } catch (err) {
-      console.error('❌ Erro ao buscar dados da produção:', err);
-      setError('Erro ao carregar dados da produção');
+      console.error('❌ Erro ao buscar dados das programações:', err);
+      setError('Erro ao carregar dados das programações');
       setData([]);
     } finally {
       setLoading(false);
@@ -187,15 +191,15 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return formatDateForDatabase(newDate);
   };
 
-  // Função principal para mover card (state local + API)
+  // Função principal para mover card (state local + API) - usando nova API
   const moveCard = useCallback(async (orderId: string | number, targetWeekDay: string) => {
     // Find the order in the current state FIRST
     const currentOrderToMove = data.find(order => compareIds(order.id, orderId));
 
     if (!currentOrderToMove) {
-      console.error(`❌ Ordem ${orderId} (tipo: ${typeof orderId}) não encontrada nos dados ANTES da atualização.`);
+      console.error(`❌ Programação ${orderId} (tipo: ${typeof orderId}) não encontrada nos dados ANTES da atualização.`);
       console.error(`📊 IDs disponíveis no estado 'data':`, data.map(o => ({ id: o.id, type: typeof o.id, ref: o.ref })));
-      throw new Error(`Ordem ${orderId} não encontrada nos dados locais (pré-atualização)`);
+      throw new Error(`Programação ${orderId} não encontrada nos dados locais (pré-atualização)`);
     }
 
     // Clone it to preserve its original state for potential revert
@@ -204,7 +208,7 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
     try {
       const newDate = calculateNewDate(targetWeekDay);
       
-      console.log(`🎯 Movendo card ${orderId} (tipo: ${typeof orderId}) para ${targetWeekDay} (${newDate})`);
+      console.log(`🎯 Movendo programação ${orderId} (tipo: ${typeof orderId}) para ${targetWeekDay} (${newDate})`);
       
       // 1. Marcar card como sendo movido (feedback visual)
       setMovingCards(prev => new Set(prev).add(orderId));
@@ -213,30 +217,27 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setData(prevData => {
         return prevData.map(order => {
           if (compareIds(order.id, orderId)) {
-            console.log(`🔄 Atualizando ordem ${orderId} no estado local: ${order.weekDay} → ${newDate}`);
+            console.log(`🔄 Atualizando programação ${orderId} no estado local: ${order.weekDay} → ${newDate}`);
             return { ...order, weekDay: newDate };
           }
           return order;
         });
       });
       
-      // Forçar re-render imediato (se still deemed necessary, often optimistic updates trigger re-render)
-      // forceRender(); // Consider if this is still needed after direct setData
-      
-      // 3. Chamar API em background
-      console.log(`🌐 Chamando API para atualizar ordem ${orderId}...`);
+      // 3. Chamar nova API para atualizar apenas o weekDay
+      console.log(`🌐 Chamando API para atualizar programação ${orderId}...`);
       await api.request({
-        url: `production_orders:update`,
+        url: `kanban_programacoes:updateWeekDay`, // Nova ação específica para atualizar weekDay
         method: 'POST',
         params: {
-          filterByTk: orderId, // Ensure API handles numeric/string ID correctly
+          filterByTk: orderId,
         },
         data: {
           weekDay: newDate,
         },
       });
 
-      console.log(`✅ Card ${orderId} movido com sucesso para ${targetWeekDay} - API confirmou`);
+      console.log(`✅ Programação ${orderId} movida com sucesso para ${targetWeekDay} - API confirmou`);
       
       // 4. Feedback visual de sucesso
       setMovingCards(prev => {
@@ -255,10 +256,10 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }, 2000);
       
     } catch (error) {
-      console.error('❌ Erro ao mover card:', error);
+      console.error('❌ Erro ao mover programação:', error);
       
       // Revert to the captured original state
-      console.log(`🔄 Revertendo ordem ${orderId} para estado original:`, originalOrderState.weekDay);
+      console.log(`🔄 Revertendo programação ${orderId} para estado original:`, originalOrderState.weekDay);
       setData(prevData => {
         return prevData.map(order => {
           if (compareIds(order.id, orderId)) {
@@ -276,12 +277,10 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
         return newSet;
       });
       
-      // forceRender(); // Consider if needed
-      
       // Re-throw the error so useDragAndDrop can catch it
       throw error; 
     }
-  }, [api, data, weekNavigation.currentWeekStart, calculateNewDate, /* forceRender, */ compareIds]);
+  }, [api, data, weekNavigation.currentWeekStart, calculateNewDate, compareIds]);
 
   // Buscar dados ao montar o componente
   useEffect(() => {
