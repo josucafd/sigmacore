@@ -290,3 +290,13 @@
     at async _AppCommand.<anonymous> (/root/www/my-nocobase-app/node_modules/@nocobase/server/lib/commands/start.js:79:5)
     at async _AppCommand.parseAsync (/root/www/my-nocobase-app/node_modules/@nocobase/server/node_modules/commander/lib/command.js:935:5)
     at async _AsyncEmitter.runAsCLI (/root/www/my-nocobase-app/node_modules/@nocobase/server/lib/application.js:557:23) module=application app=main reqId=1276a84f-8372-4392-b023-40b504564c68 dataSourceKey=main
+[31m2025-05-31 22:48:49 [error] Cannot find plugin '@my-project/plugin-hello'[39m stack=Error: Cannot find plugin '@my-project/plugin-hello'
+    at PluginManager.getPackageJson (/root/www/my-nocobase-app/node_modules/@nocobase/server/lib/plugin-manager/plugin-manager.js:134:13)
+    at async _PluginManager.add (/root/www/my-nocobase-app/node_modules/@nocobase/server/lib/plugin-manager/plugin-manager.js:317:29)
+    at async _PluginManagerRepository.init (/root/www/my-nocobase-app/node_modules/@nocobase/server/lib/plugin-manager/plugin-manager-repository.js:192:7)
+    at async _PluginManager.initOtherPlugins (/root/www/my-nocobase-app/node_modules/@nocobase/server/lib/plugin-manager/plugin-manager.js:1048:5)
+    at async _PluginManager.initPlugins (/root/www/my-nocobase-app/node_modules/@nocobase/server/lib/plugin-manager/plugin-manager.js:359:5)
+    at async _AsyncEmitter.load (/root/www/my-nocobase-app/node_modules/@nocobase/server/lib/application.js:421:5)
+    at async _AppCommand.<anonymous> (/root/www/my-nocobase-app/node_modules/@nocobase/server/lib/commands/start.js:79:5)
+    at async _AppCommand.parseAsync (/root/www/my-nocobase-app/node_modules/@nocobase/server/node_modules/commander/lib/command.js:935:5)
+    at async _AsyncEmitter.runAsCLI (/root/www/my-nocobase-app/node_modules/@nocobase/server/lib/application.js:557:23) module=application app=main reqId=2051d4d8-f835-410a-ae45-77ea909a3376 dataSourceKey=main

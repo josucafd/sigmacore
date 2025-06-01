@@ -35,7 +35,7 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
   }, [data]);
 
   // Função para renderizar o conteúdo de cada célula do calendário
-  const cellRender = (current: Dayjs, info: { type: 'date' | 'month'; originNode: React.ReactElement }) => {
+  const cellRender = (current: Dayjs, info: any) => {
     if (info.type === 'month') {
       // Para a visualização de mês, não fazemos customização adicional aqui, apenas retornamos o nó original
       return info.originNode;
@@ -75,7 +75,7 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
       <div className="calendar-cell-content">
         <Badge 
           status={badgeStatus} 
-          text={`${totalOrders} ordens`}
+          text={`${totalOrders} programações`}
           className="calendar-cell-badge"
         />
         
@@ -145,10 +145,10 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
           Visualização Mensal - {currentMonth.format('MMMM YYYY')}
         </h3>
         <div className="monthly-calendar-legend">
-          <Badge status="success" text="1-2 ordens" />
-          <Badge status="processing" text="3-4 ordens" />
-          <Badge status="warning" text="5-7 ordens" />
-          <Badge status="error" text="8+ ordens" />
+          <Badge status="success" text="1-2 programações" />
+          <Badge status="processing" text="3-4 programações" />
+          <Badge status="warning" text="5-7 programações" />
+          <Badge status="error" text="8+ programações" />
         </div>
       </div>
 
@@ -186,11 +186,11 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
         )}
       />
 
-      {/* Modal com lista de ordens do dia selecionado */}
+      {/* Modal com lista de programações do dia selecionado */}
       <Modal
         title={
           <div className="modal-title">
-            <span>Ordens para {selectedDate?.format('DD/MM/YYYY')}</span>
+            <span>Programações para {selectedDate?.format('DD/MM/YYYY')}</span>
             <Badge count={selectedDateOrders.length} showZero />
           </div>
         }
@@ -215,7 +215,7 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
                     icon={<EyeOutlined />} 
                     size="small"
                     onClick={() => handleViewOrder(order)}
-                    title="Ver detalhes completos da ordem"
+                    title="Ver detalhes completos da programação"
                   >
                     Ver
                   </Button>
@@ -252,9 +252,9 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
         />
       </Modal>
 
-      {/* Modal de detalhes completos da ordem */}
+      {/* Modal de detalhes completos da programação */}
       <Modal
-        title={`Detalhes da Ordem ${selectedOrder?.ref || selectedOrder?.id}`}
+        title={`Detalhes da Programação ${selectedOrder?.ref || selectedOrder?.id}`}
         open={detailModalVisible}
         onCancel={() => {
           setDetailModalVisible(false);

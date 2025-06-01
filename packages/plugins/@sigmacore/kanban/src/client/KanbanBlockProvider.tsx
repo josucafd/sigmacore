@@ -319,12 +319,32 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return data;
   }, [data, forceRenderCounter]);
 
+  // Função para calcular cards atrasados
+  const overdueCards = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Compara com o início do dia de hoje
+
+    return data
+      .filter(order => {
+        if (!order.weekDay) return false;
+        try {
+          const orderDate = new Date(order.weekDay);
+          orderDate.setHours(0, 0, 0, 0); // Compara o início do dia da ordem
+          return orderDate < today;
+        } catch (e) {
+          console.warn(`Data inválida para a ordem ID ${order.id}: ${order.weekDay}`, e);
+          return false; // Data inválida não deve quebrar o filtro
+        }
+      })
+      .sort((a, b) => new Date(a.weekDay).getTime() - new Date(b.weekDay).getTime()); // Mais antigos primeiro
+  }, [data]);
+
   // Filtrar dados da semana atual sendo exibida, excluindo atrasados e garantindo data atual/futura
   const dataForWeeklyView = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    // Adicionar fallback para overdueCards caso seja undefined transitoriamente
-    const overdueIds = new Set((overdueCards || []).map(card => card.id));
+    // Usar overdueCards que já foi definido acima
+    const overdueIds = new Set(overdueCards.map(card => card.id));
 
     return data.filter(order => {
       if (overdueIds.has(order.id)) {
@@ -409,26 +429,6 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
     console.log('🔄 Columns result:', result.map(col => `${col.id}: ${col.cards.length} cards`));
     return result;
   }, [filteredData, weekNavigation.weekDays, weekNavigation.getWeekDayFromDate]);
-
-  // Função para calcular cards atrasados
-  const overdueCards = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Compara com o início do dia de hoje
-
-    return data
-      .filter(order => {
-        if (!order.weekDay) return false;
-        try {
-          const orderDate = new Date(order.weekDay);
-          orderDate.setHours(0, 0, 0, 0); // Compara o início do dia da ordem
-          return orderDate < today;
-        } catch (e) {
-          console.warn(`Data inválida para a ordem ID ${order.id}: ${order.weekDay}`, e);
-          return false; // Data inválida não deve quebrar o filtro
-        }
-      })
-      .sort((a, b) => new Date(a.weekDay).getTime() - new Date(b.weekDay).getTime()); // Mais antigos primeiro
-  }, [data]);
 
   // Função para alternar visibilidade da seção de atrasados
   const toggleOverdueSection = useCallback(() => {
