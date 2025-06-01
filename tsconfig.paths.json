@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@@/*": [
+        ".dumi/tmp/*"
+      ],
+      "@sigmacore/kanban/client": [
+        "packages/plugins/@sigmacore/kanban/src/client"
+      ],
+      "@sigmacore/kanban/package.json": [
+        "packages/plugins/@sigmacore/kanban/package.json"
+      ],
+      "@sigmacore/kanban": [
+        "packages/plugins/@sigmacore/kanban/src"
+      ]
+    }
+  }
+}
