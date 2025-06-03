@@ -109,8 +109,16 @@ export const useWeekNavigation = () => {
       const d = new Date(date);
       if (isNaN(d.getTime())) return 'sem-data';
       
-      // Converter para data local para evitar problemas de fuso horário
-      const localDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      // Criar uma nova data usando as partes de data
+      // Usamos os getUTC* para evitar problemas de fuso horário
+      // O formato ISO "2025-06-03" será sempre interpretado como UTC
+      // Então precisamos criar uma nova data local
+      const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
+      const [year, month, day] = dateStr.split('-').map(Number);
+      
+      // Garantir que estamos criando uma data local no dia correto
+      const localDate = new Date(year, month - 1, day, 12, 0, 0);
+      
       const dayOfWeek = localDate.getDay();
       
       const weekDays = [
@@ -123,8 +131,12 @@ export const useWeekNavigation = () => {
         'sabado'
       ];
       
+      // Logging para debug
+      console.log(`🗓️ Conversão de data: ${dateStr} => ${localDate.toISOString().split('T')[0]} => ${weekDays[dayOfWeek]}`);
+      
       return weekDays[dayOfWeek];
-    } catch {
+    } catch (e) {
+      console.error('❌ Erro ao calcular dia da semana:', e, date);
       return 'sem-data';
     }
   };
@@ -135,12 +147,20 @@ export const useWeekNavigation = () => {
       const d = new Date(date);
       if (isNaN(d.getTime())) return false;
       
-      // Converter para data local para comparação
-      const localDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      // Usar o mesmo método que getWeekDayFromDate para garantir consistência
+      const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const localDate = new Date(year, month - 1, day, 12, 0, 0);
+      
+      // Obter o início da semana para esta data
       const dateWeekStart = getWeekStart(localDate);
       
-      return dateWeekStart.getTime() === currentWeekStart.getTime();
-    } catch {
+      const result = dateWeekStart.getTime() === currentWeekStart.getTime();
+      console.log(`📅 Verificação de semana: ${dateStr} => Início da semana: ${dateWeekStart.toISOString().split('T')[0]} vs ${currentWeekStart.toISOString().split('T')[0]} = ${result}`);
+      
+      return result;
+    } catch (e) {
+      console.error('❌ Erro ao verificar semana:', e, date);
       return false;
     }
   };

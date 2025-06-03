@@ -37,10 +37,10 @@ export const OverdueLane: React.FC = () => {
         </div>
         
         <div className="kanban-column-cards">
-          {overdueCards.map((order) => (
+          {overdueCards.map((programacao) => (
             <Card
-              key={`overdue-${order.id}`}
-              data={order}
+              key={`overdue-${programacao.id_programacao}`}
+              data={programacao}
             />
           ))}
           
@@ -49,7 +49,7 @@ export const OverdueLane: React.FC = () => {
               <div className="kanban-column-empty-content">
                 <Empty
                   image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description="Nenhuma ordem em atraso"
+                  description="Nenhuma programação em atraso"
                 />
               </div>
             </div>

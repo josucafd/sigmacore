@@ -1,26 +1,26 @@
 /**
- * Utilitários para manipulação de status
+ * Utilitários para trabalhar com status/setores das programações
  */
 
 /**
- * Extrai todos os valores de status de um campo status (que pode ser string, array ou objeto)
+ * Extrai todos os valores de status dos setores_atuais
  */
-export const getAllStatusValues = (status: any): string[] => {
-  if (Array.isArray(status)) {
-    return status.map(item => String(item).toLowerCase());
+export const getAllStatusValues = (setoresAtuais: any): string[] => {
+  if (Array.isArray(setoresAtuais)) {
+    return setoresAtuais.map(item => String(item).toLowerCase());
   }
-  if (typeof status === 'string') {
+  if (typeof setoresAtuais === 'string') {
     try {
-      const parsed = JSON.parse(status);
+      const parsed = JSON.parse(setoresAtuais);
       if (Array.isArray(parsed)) {
         return parsed.map(item => String(item).toLowerCase());
       }
-      return [(parsed.value || parsed.status || status).toLowerCase()];
+      return [(parsed.value || parsed.setor || setoresAtuais).toLowerCase()];
     } catch {
-      return [status.replace(/['"]/g, '').toLowerCase()];
+      return [setoresAtuais.replace(/['"]/g, '').toLowerCase()];
     }
-  } else if (typeof status === 'object' && status !== null) {
-    return [(status.value || status.status || 'indefinido').toLowerCase()];
+  } else if (typeof setoresAtuais === 'object' && setoresAtuais !== null) {
+    return [(setoresAtuais.value || setoresAtuais.setor || 'indefinido').toLowerCase()];
   }
   return ['indefinido'];
 };
@@ -28,16 +28,27 @@ export const getAllStatusValues = (status: any): string[] => {
 /**
  * Extrai o primeiro valor de status (para compatibilidade com código existente)
  */
-export const getStatusValue = (status: any): string => {
-  const allStatus = getAllStatusValues(status);
+export const getStatusValue = (setoresAtuais: any): string => {
+  const allStatus = getAllStatusValues(setoresAtuais);
   return allStatus[0] || 'indefinido';
 };
 
 /**
- * Mapeia status para cores
+ * Mapeia status/setores para cores
  */
 export const getStatusColor = (status: string): string => {
   const statusColorMap: Record<string, string> = {
+    // Setores de produção típicos
+    'corte': '#fa8c16',
+    'costura': '#1677ff',
+    'bordado': '#722ed1',
+    'estampa': '#52c41a',
+    'acabamento': '#13c2c2',
+    'qualidade': '#faad14',
+    'expedição': '#52c41a',
+    'embalagem': '#13c2c2',
+    
+    // Status tradicionais mantidos para compatibilidade
     'aguardando': '#fa8c16',
     'em_producao': '#1677ff',
     'em_produção': '#1677ff',

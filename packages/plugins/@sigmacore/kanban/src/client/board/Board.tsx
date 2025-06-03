@@ -44,13 +44,13 @@ export const Board: React.FC = () => {
   } = useDragAndDrop({
     weekNavigation,
     moveCard,
-    onSuccess: (orderId, targetWeekDay) => {
+    onSuccess: (programacaoId, targetWeekDay) => {
       message.success({
-        content: `Ordem ${orderId} reprogramada com sucesso para ${targetWeekDay}!`,
+        content: `Programação ${programacaoId} reprogramada com sucesso para ${targetWeekDay}!`,
         duration: 3,
-        key: `move-${orderId}`, // Evita duplicar mensagens
+        key: `move-${programacaoId}`, // Evita duplicar mensagens
       });
-      console.log(`✅ Sucesso: Ordem ${orderId} movida para ${targetWeekDay}`);
+      console.log(`✅ Sucesso: Programação ${programacaoId} movida para ${targetWeekDay}`);
     },
     onError: (errorMessage) => {
       message.error({
@@ -66,7 +66,7 @@ export const Board: React.FC = () => {
   if (loading) {
     return (
       <div className="kanban-board-loading">
-        <Spin size="large" tip="Carregando ordens de produção..." />
+        <Spin size="large" tip="Carregando programações de produção..." />
       </div>
     );
   }
@@ -102,7 +102,7 @@ export const Board: React.FC = () => {
             <h2 className="kanban-board-title">Kanban de Produção</h2>
             {selectedStatuses.length > 0 && (
               <span className="kanban-board-filter-info">
-                ({filteredData.length} de {data.length} ordens)
+                ({filteredData.length} de {data.length} programações)
               </span>
             )}
           </div>
@@ -160,13 +160,13 @@ export const Board: React.FC = () => {
                     marginLeft: 8,
                     fontSize: '10px'
                   }}
-                  title={`${movingCount} ordem${movingCount > 1 ? 'ns' : ''} sendo movida${movingCount > 1 ? 's' : ''}`}
+                  title={`${movingCount} programação${movingCount > 1 ? 'ões' : ''} sendo movida${movingCount > 1 ? 's' : ''}`}
                 />
               )}
             </h2>
             {selectedStatuses.length > 0 && (
               <span className="kanban-board-filter-info">
-                ({columns.reduce((total, col) => total + col.cards.length, 0)} de {data.length} ordens)
+                ({columns.reduce((total, col) => total + col.cards.length, 0)} de {data.length} programações)
               </span>
             )}
           </div>
@@ -220,7 +220,7 @@ export const Board: React.FC = () => {
           <div className="kanban-activity-indicator">
             <Spin size="small" />
             <span style={{ marginLeft: 8, fontSize: 12, color: '#1677ff' }}>
-              Reprogramando {movingCount} ordem{movingCount > 1 ? 'ns' : ''}...
+              Reprogramando {movingCount} programação{movingCount > 1 ? 'ões' : ''}...
             </span>
           </div>
         )}

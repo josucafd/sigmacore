@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { Select, Tag } from 'antd';
 import { FilterOutlined } from '@ant-design/icons';
-import { ProductionOrder } from '../KanbanBlockProvider';
+import { Programacao } from '../KanbanBlockProvider';
 
 export interface StatusFilterProps {
-  data: ProductionOrder[];
+  data: Programacao[];
   selectedStatuses: string[];
   onStatusChange: (statuses: string[]) => void;
 }
@@ -18,28 +18,28 @@ export const StatusFilter: React.FC<StatusFilterProps> = ({
   const uniqueStatuses = useMemo(() => {
     const statusSet = new Set<string>();
     
-    data.forEach(order => {
-      const getAllStatusValues = (status: any): string[] => {
-        if (Array.isArray(status)) {
-          return status.map(item => String(item).toLowerCase());
+    data.forEach(programacao => {
+      const getAllStatusValues = (setoresAtuais: any): string[] => {
+        if (Array.isArray(setoresAtuais)) {
+          return setoresAtuais.map(item => String(item).toLowerCase());
         }
-        if (typeof status === 'string') {
+        if (typeof setoresAtuais === 'string') {
           try {
-            const parsed = JSON.parse(status);
+            const parsed = JSON.parse(setoresAtuais);
             if (Array.isArray(parsed)) {
               return parsed.map(item => String(item).toLowerCase());
             }
-            return [(parsed.value || parsed.status || status).toLowerCase()];
+            return [(parsed.value || parsed.setor || setoresAtuais).toLowerCase()];
           } catch {
-            return [status.replace(/['"]/g, '').toLowerCase()];
+            return [setoresAtuais.replace(/['"]/g, '').toLowerCase()];
           }
-        } else if (typeof status === 'object' && status !== null) {
-          return [(status.value || status.status || 'indefinido').toLowerCase()];
+        } else if (typeof setoresAtuais === 'object' && setoresAtuais !== null) {
+          return [(setoresAtuais.value || setoresAtuais.setor || 'indefinido').toLowerCase()];
         }
         return ['indefinido'];
       };
 
-      const statusValues = getAllStatusValues(order.status);
+      const statusValues = getAllStatusValues(programacao.setores_atuais);
       statusValues.forEach(status => statusSet.add(status));
     });
 
@@ -49,6 +49,17 @@ export const StatusFilter: React.FC<StatusFilterProps> = ({
   // Função para mapear status para cores
   const getStatusColor = (status: string): string => {
     const statusColorMap: Record<string, string> = {
+      // Setores de produção típicos
+      'corte': '#fa8c16',
+      'costura': '#1677ff',
+      'bordado': '#722ed1',
+      'estampa': '#52c41a',
+      'acabamento': '#13c2c2',
+      'qualidade': '#faad14',
+      'expedição': '#52c41a',
+      'embalagem': '#13c2c2',
+      
+      // Status tradicionais mantidos para compatibilidade
       'aguardando': '#fa8c16',
       'em_producao': '#1677ff',
       'em_produção': '#1677ff',
@@ -76,28 +87,28 @@ export const StatusFilter: React.FC<StatusFilterProps> = ({
 
   // Contar quantos itens há para cada status
   const getStatusCount = (status: string): number => {
-    return data.filter(order => {
-      const getAllStatusValues = (status: any): string[] => {
-        if (Array.isArray(status)) {
-          return status.map(item => String(item).toLowerCase());
+    return data.filter(programacao => {
+      const getAllStatusValues = (setoresAtuais: any): string[] => {
+        if (Array.isArray(setoresAtuais)) {
+          return setoresAtuais.map(item => String(item).toLowerCase());
         }
-        if (typeof status === 'string') {
+        if (typeof setoresAtuais === 'string') {
           try {
-            const parsed = JSON.parse(status);
+            const parsed = JSON.parse(setoresAtuais);
             if (Array.isArray(parsed)) {
               return parsed.map(item => String(item).toLowerCase());
             }
-            return [(parsed.value || parsed.status || status).toLowerCase()];
+            return [(parsed.value || parsed.setor || setoresAtuais).toLowerCase()];
           } catch {
-            return [status.replace(/['"]/g, '').toLowerCase()];
+            return [setoresAtuais.replace(/['"]/g, '').toLowerCase()];
           }
-        } else if (typeof status === 'object' && status !== null) {
-          return [(status.value || status.status || 'indefinido').toLowerCase()];
+        } else if (typeof setoresAtuais === 'object' && setoresAtuais !== null) {
+          return [(setoresAtuais.value || setoresAtuais.setor || 'indefinido').toLowerCase()];
         }
         return ['indefinido'];
       };
 
-      const statusValues = getAllStatusValues(order.status);
+      const statusValues = getAllStatusValues(programacao.setores_atuais);
       return statusValues.includes(status);
     }).length;
   };
