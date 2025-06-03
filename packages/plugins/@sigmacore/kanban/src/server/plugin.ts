@@ -97,9 +97,20 @@ export class KanbanServer extends Plugin {
         // Action para atualizar a data_termino de uma programação
         updateDataTermino: async (ctx, next) => {
           try {
-            const { filterByTk } = ctx.action.params;
+            // Fallback para capturar filterByTk de diferentes fontes
+            const filterByTk = ctx.action?.params?.filterByTk || ctx.request.query?.filterByTk || ctx.params?.filterByTk;
             const { data_termino } = ctx.request.body;
-            
+
+            // Log detalhado para depuração
+            console.log('Parâmetros recebidos para updateDataTermino:', {
+              actionParams: ctx.action?.params,
+              query: ctx.request.query,
+              params: ctx.params,
+              body: ctx.request.body,
+              filterByTk,
+              data_termino
+            });
+
             const { db } = this.app;
             
             // Usar query SQL direta para atualizar na tabela real
@@ -110,7 +121,7 @@ export class KanbanServer extends Plugin {
             `;
             
             await db.sequelize.query(updateQuery, {
-              replacements: [data_termino, filterByTk]
+              bind: [data_termino, filterByTk]
             });
             
             ctx.body = { success: true };

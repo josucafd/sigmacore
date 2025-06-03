@@ -152,11 +152,33 @@ export const useWeekNavigation = () => {
       const [year, month, day] = dateStr.split('-').map(Number);
       const localDate = new Date(year, month - 1, day, 12, 0, 0);
       
+      // Verificar se a data é válida antes de prosseguir
+      if (isNaN(localDate.getTime())) {
+        console.error('❌ Data inválida após parsing:', dateStr, year, month, day);
+        return false;
+      }
+      
       // Obter o início da semana para esta data
       const dateWeekStart = getWeekStart(localDate);
       
+      // Verificar se dateWeekStart é uma data válida
+      if (isNaN(dateWeekStart.getTime())) {
+        console.error('❌ Início de semana inválido:', localDate);
+        return false;
+      }
+      
+      // Função helper segura para formatar data
+      const safeISOString = (d: Date): string => {
+        try {
+          return d.toISOString().split('T')[0];
+        } catch (e) {
+          console.error('❌ Erro ao converter para ISO:', d, e);
+          return 'invalid-date';
+        }
+      };
+      
       const result = dateWeekStart.getTime() === currentWeekStart.getTime();
-      console.log(`📅 Verificação de semana: ${dateStr} => Início da semana: ${dateWeekStart.toISOString().split('T')[0]} vs ${currentWeekStart.toISOString().split('T')[0]} = ${result}`);
+      console.log(`📅 Verificação de semana: ${dateStr} => Início da semana: ${safeISOString(dateWeekStart)} vs ${safeISOString(currentWeekStart)} = ${result}`);
       
       return result;
     } catch (e) {
