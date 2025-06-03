@@ -3,31 +3,31 @@ import { Calendar, Badge, Modal, List, Tag, Button, Descriptions } from 'antd';
 import { LeftOutlined, RightOutlined, EyeOutlined } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { ProductionOrder } from '../KanbanBlockProvider';
+import { Programacao } from '../KanbanBlockProvider';
 import { getAllStatusValues, getStatusColor, formatStatusLabel } from '../utils/statusUtils';
 
 export interface MonthlyCalendarProps {
-  data: ProductionOrder[];
+  data: Programacao[];
 }
 
 export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<ProductionOrder | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Programacao | null>(null);
   const [currentMonth, setCurrentMonth] = useState(dayjs());
 
   // Agrupar dados por data
   const dataByDate = useMemo(() => {
-    const grouped: Record<string, ProductionOrder[]> = {};
+    const grouped: Record<string, Programacao[]> = {};
     
-    data.forEach(order => {
-      if (order.weekDay) {
-        const dateKey = dayjs(order.weekDay).format('YYYY-MM-DD');
+    data.forEach(programacao => {
+      if (programacao.data_termino) {
+        const dateKey = dayjs(programacao.data_termino).format('YYYY-MM-DD');
         if (!grouped[dateKey]) {
           grouped[dateKey] = [];
         }
-        grouped[dateKey].push(order);
+        grouped[dateKey].push(programacao);
       }
     });
     
@@ -53,12 +53,12 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
 
     // Calcular estatísticas do dia
     const totalOrders = ordersForDate.length;
-    const totalQuantity = ordersForDate.reduce((sum, order) => sum + (order.qtd || 0), 0);
+    const totalQuantity = ordersForDate.reduce((sum, programacao) => sum + (programacao.qtd_op || 0), 0);
     
     // Contar status únicos
     const statusCount: Record<string, number> = {};
-    ordersForDate.forEach(order => {
-      const statuses = getAllStatusValues(order.status);
+    ordersForDate.forEach(programacao => {
+      const statuses = getAllStatusValues(programacao.setores_atuais);
       statuses.forEach(status => {
         statusCount[status] = (statusCount[status] || 0) + 1;
       });
@@ -128,7 +128,7 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
   };
 
   // Função para visualizar detalhes de uma ordem
-  const handleViewOrder = (order: ProductionOrder) => {
+  const handleViewOrder = (order: Programacao) => {
     setSelectedOrder(order);
     setDetailModalVisible(true);
   };
@@ -205,8 +205,8 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
       >
         <List
           dataSource={selectedDateOrders}
-          renderItem={(order) => {
-            const statuses = getAllStatusValues(order.status);
+          renderItem={(programacao) => {
+            const statuses = getAllStatusValues(programacao.setores_atuais);
             return (
               <List.Item
                 actions={[
@@ -214,8 +214,8 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
                     key="view" 
                     icon={<EyeOutlined />} 
                     size="small"
-                    onClick={() => handleViewOrder(order)}
-                    title="Ver detalhes completos da ordem"
+                    onClick={() => handleViewOrder(programacao)}
+                    title="Ver detalhes completos da programação"
                   >
                     Ver
                   </Button>
@@ -224,7 +224,7 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
                 <List.Item.Meta
                   title={
                     <div className="order-title">
-                      <span>{order.ref || `#${order.id}`}</span>
+                      <span>{programacao.referencia || `#${programacao.id_programacao}`}</span>
                       <div className="order-status-tags">
                         {statuses.map((status, index) => (
                           <Tag 
@@ -239,10 +239,10 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
                   }
                   description={
                     <div className="order-details">
-                      <div>Op Interna: {order.opInterna || '-'}</div>
-                      {order.opCliente && <div>Op Cliente: {order.opCliente}</div>}
-                      {order.qtd && <div>Quantidade: {order.qtd.toLocaleString()} pçs</div>}
-                      {order.produto && <div>Produto: {order.produto}</div>}
+                      <div>Op Interna: {programacao.op_interna || '-'}</div>
+                      {programacao.op_cliente && <div>Op Cliente: {programacao.op_cliente}</div>}
+                      {programacao.qtd_op && <div>Quantidade: {programacao.qtd_op.toLocaleString()} pçs</div>}
+                      {programacao.tipo_op && <div>Tipo: {programacao.tipo_op}</div>}
                     </div>
                   }
                 />
@@ -254,7 +254,7 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
 
       {/* Modal de detalhes completos da ordem */}
       <Modal
-        title={`Detalhes da Ordem ${selectedOrder?.ref || selectedOrder?.id}`}
+        title={`Detalhes da Ordem ${selectedOrder?.referencia || selectedOrder?.id_programacao}`}
         open={detailModalVisible}
         onCancel={() => {
           setDetailModalVisible(false);
@@ -266,44 +266,43 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
         {selectedOrder && (
           <Descriptions bordered column={2} size="small">
             <Descriptions.Item label="Referência" span={2}>
-              {selectedOrder.ref || '-'}
+              {selectedOrder.referencia || '-'}
             </Descriptions.Item>
             <Descriptions.Item label="OP Interna">
-              {selectedOrder.opInterna || '-'}
+              {selectedOrder.op_interna || '-'}
             </Descriptions.Item>
             <Descriptions.Item label="OP Cliente">
-              {selectedOrder.opCliente || '-'}
+              {selectedOrder.op_cliente || '-'}
             </Descriptions.Item>
             <Descriptions.Item label="Quantidade">
-              {selectedOrder.qtd ? `${selectedOrder.qtd.toLocaleString()} pçs` : '-'}
+              {selectedOrder.qtd_op ? `${selectedOrder.qtd_op.toLocaleString()} pçs` : '-'}
             </Descriptions.Item>
-            <Descriptions.Item label="Prioridade">
+            <Descriptions.Item label="Tipo">
               <Tag color={
-                selectedOrder.priority === 'high' ? 'red' :
-                selectedOrder.priority === 'normal' ? 'green' : 'blue'
+                selectedOrder.tipo_op === 'NORMAL' ? 'green' : 'blue'
               }>
-                {selectedOrder.priority || 'normal'}
+                {selectedOrder.tipo_op || 'normal'}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="Produto" span={2}>
-              {selectedOrder.produto || '-'}
+            <Descriptions.Item label="Referência" span={2}>
+              {selectedOrder.referencia || '-'}
             </Descriptions.Item>
             <Descriptions.Item label="Data Programada" span={2}>
-              {selectedOrder.weekDay ? dayjs(selectedOrder.weekDay).format('DD/MM/YYYY') : '-'}
+              {selectedOrder.data_termino ? dayjs(selectedOrder.data_termino).format('DD/MM/YYYY') : '-'}
             </Descriptions.Item>
             <Descriptions.Item label="Status" span={2}>
               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                {getAllStatusValues(selectedOrder.status).map((status, index) => (
+                {getAllStatusValues(selectedOrder.setores_atuais).map((status, index) => (
                   <Tag key={index} color={getStatusColor(status)}>
                     {formatStatusLabel(status)}
                   </Tag>
                 ))}
               </div>
             </Descriptions.Item>
-            {selectedOrder.imageUrl && (
+            {selectedOrder.foto_piloto_url && (
               <Descriptions.Item label="Imagem" span={2}>
                 <img 
-                  src={selectedOrder.imageUrl} 
+                  src={selectedOrder.foto_piloto_url} 
                   alt="Produto" 
                   style={{ maxWidth: '200px', maxHeight: '150px', objectFit: 'contain' }}
                 />

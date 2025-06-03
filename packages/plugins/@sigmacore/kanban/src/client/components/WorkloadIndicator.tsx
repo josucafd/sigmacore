@@ -1,9 +1,9 @@
 import React from 'react';
 import { Tooltip, Progress } from 'antd';
-import { ProductionOrder } from '../KanbanBlockProvider';
+import { Programacao } from '../KanbanBlockProvider';
 
 export interface WorkloadIndicatorProps {
-  data: ProductionOrder[];
+  data: Programacao[];
   maxWorkload?: number;
 }
 
@@ -13,40 +13,40 @@ export const WorkloadIndicator: React.FC<WorkloadIndicatorProps> = ({
 }) => {
   // Calcular métricas de carga de trabalho
   const calculateWorkloadMetrics = () => {
-    const totalOrders = data.length;
-    const totalQuantity = data.reduce((sum, order) => sum + (order.qtd || 0), 0);
+    const totalProgramacoes = data.length;
+    const totalQuantity = data.reduce((sum, programacao) => sum + (programacao.qtd_op || 0), 0);
     
-    // Distribuição por status
-    const statusDistribution = data.reduce((acc, order) => {
-      const getAllStatusValues = (status: any): string[] => {
-        if (Array.isArray(status)) {
-          return status.map(item => String(item).toLowerCase());
+    // Distribuição por status/setor
+    const statusDistribution = data.reduce((acc, programacao) => {
+      const getAllStatusValues = (setoresAtuais: any): string[] => {
+        if (Array.isArray(setoresAtuais)) {
+          return setoresAtuais.map(item => String(item).toLowerCase());
         }
-        if (typeof status === 'string') {
+        if (typeof setoresAtuais === 'string') {
           try {
-            const parsed = JSON.parse(status);
+            const parsed = JSON.parse(setoresAtuais);
             if (Array.isArray(parsed)) {
               return parsed.map(item => String(item).toLowerCase());
             }
-            return [(parsed.value || parsed.status || status).toLowerCase()];
+            return [(parsed.value || parsed.setor || setoresAtuais).toLowerCase()];
           } catch {
-            return [status.replace(/['"]/g, '').toLowerCase()];
+            return [setoresAtuais.replace(/['"]/g, '').toLowerCase()];
           }
-        } else if (typeof status === 'object' && status !== null) {
-          return [(status.value || status.status || 'indefinido').toLowerCase()];
+        } else if (typeof setoresAtuais === 'object' && setoresAtuais !== null) {
+          return [(setoresAtuais.value || setoresAtuais.setor || 'indefinido').toLowerCase()];
         }
         return ['indefinido'];
       };
 
-      const statusValues = getAllStatusValues(order.status);
+      const statusValues = getAllStatusValues(programacao.setores_atuais);
       statusValues.forEach(status => {
         acc[status] = (acc[status] || 0) + 1;
       });
       return acc;
     }, {} as Record<string, number>);
 
-    // Calcular porcentagem de carga baseada no número de ordens
-    const workloadPercentage = Math.min((totalOrders / maxWorkload) * 100, 100);
+    // Calcular porcentagem de carga baseada no número de programações
+    const workloadPercentage = Math.min((totalProgramacoes / maxWorkload) * 100, 100);
     
     // Determinar nível de carga
     let workloadLevel: 'low' | 'medium' | 'high' = 'low';
@@ -54,7 +54,7 @@ export const WorkloadIndicator: React.FC<WorkloadIndicatorProps> = ({
     else if (workloadPercentage > 40) workloadLevel = 'medium';
 
     return {
-      totalOrders,
+      totalProgramacoes,
       totalQuantity,
       statusDistribution,
       workloadPercentage,
@@ -78,10 +78,10 @@ export const WorkloadIndicator: React.FC<WorkloadIndicatorProps> = ({
   const tooltipContent = (
     <div className="workload-tooltip">
       <div><strong>Carga de Trabalho</strong></div>
-      <div>Total de Ordens: {metrics.totalOrders}</div>
+      <div>Total de Programações: {metrics.totalProgramacoes}</div>
       <div>Quantidade Total: {metrics.totalQuantity.toLocaleString()}</div>
       <div style={{ marginTop: 8 }}>
-        <strong>Status:</strong>
+        <strong>Setores:</strong>
       </div>
       {Object.entries(metrics.statusDistribution).map(([status, count]) => (
         <div key={status}>
@@ -96,8 +96,8 @@ export const WorkloadIndicator: React.FC<WorkloadIndicatorProps> = ({
       <Tooltip title={tooltipContent} placement="top">
         <div className="workload-content">
           <div className="workload-count">
-            <span className="workload-number">{metrics.totalOrders}</span>
-            <span className="workload-label">ordens</span>
+            <span className="workload-number">{metrics.totalProgramacoes}</span>
+            <span className="workload-label">programações</span>
           </div>
           <Progress
             percent={metrics.workloadPercentage}

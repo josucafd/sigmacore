@@ -9,6 +9,16 @@
             "date": 1748697186779,
             "name": "/root/www/my-nocobase-app/storage/logs/main/request_2025-05-31.log",
             "hash": "2d61906212dbc62b339a9ceb396e6e38fa65e39d89aea5fc87e695c5b3a4605c"
+        },
+        {
+            "date": 1748868142284,
+            "name": "/root/www/my-nocobase-app/storage/logs/main/request_2025-06-02.log",
+            "hash": "acf77383dd358bc1b5d01a4ed2299963ecb4ab2ec8b4ece9fc2a53dd907112f8"
+        },
+        {
+            "date": 1748947372299,
+            "name": "/root/www/my-nocobase-app/storage/logs/main/request_2025-06-03.log",
+            "hash": "8b94f48207cd1317bd343b382b56a103818fe32bce872354c97af1a73670cff6"
         }
     ],
     "hashType": "sha256"

@@ -1,25 +1,25 @@
 import React from 'react';
 import { DragOverlay as DndDragOverlay } from '@dnd-kit/core';
 import { Card } from '../board/Card';
-import { ProductionOrder } from '../KanbanBlockProvider';
+import { Programacao } from '../KanbanBlockProvider';
 
 export interface DragOverlayProps {
   activeId: string | null;
-  data: ProductionOrder[];
+  data: Programacao[];
 }
 
 export const DragOverlay: React.FC<DragOverlayProps> = ({ activeId, data }) => {
-  // Encontrar a ordem que está sendo arrastada
-  const activeOrder = data.find(order => String(order.id) === activeId);
+  // Encontrar a programação que está sendo arrastada
+  const activeProgramacao = data.find(prog => String(prog.id_programacao) === activeId);
 
-  if (!activeOrder) {
+  if (!activeProgramacao) {
     return null;
   }
 
   return (
     <DndDragOverlay>
       <div className="kanban-card-drag-overlay">
-        <Card data={activeOrder} />
+        <Card data={activeProgramacao} />
       </div>
     </DndDragOverlay>
   );

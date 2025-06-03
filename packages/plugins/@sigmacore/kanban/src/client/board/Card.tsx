@@ -2,26 +2,26 @@ import React from 'react';
 import { Button, Dropdown, Spin } from 'antd';
 import { MoreOutlined, EditOutlined, DeleteOutlined, EyeOutlined, DragOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useDraggable } from '@dnd-kit/core';
-import { ProductionOrder, useKanbanBlockContext } from '../KanbanBlockProvider';
+import { Programacao, useKanbanBlockContext } from '../KanbanBlockProvider';
 
 export interface CardProps {
-  data: ProductionOrder;
+  data: Programacao;
 }
 
 export const Card: React.FC<CardProps> = ({ data }) => {
-  const { ref, opInterna, opCliente, qtd, status, produto, priority, imageUrl, weekDay } = data;
+  const { referencia, op_interna, op_cliente, qtd_op, setores_atuais, tipo_op, foto_piloto_url, data_termino } = data;
   const { movingCards, movedCards } = useKanbanBlockContext();
 
   // Verificar estados visuais
-  const isMoving = movingCards.has(data.id);
-  const wasMoved = movedCards.has(data.id);
+  const isMoving = movingCards.has(data.id_programacao);
+  const wasMoved = movedCards.has(data.id_programacao);
 
   // Função para extrair o dia da semana da data
-  const getWeekDay = (weekDay: string): string => {
-    if (!weekDay) return 'sem-data';
+  const getWeekDay = (dataTermino: string): string => {
+    if (!dataTermino) return 'sem-data';
     
     try {
-      const date = new Date(weekDay);
+      const date = new Date(dataTermino);
       if (isNaN(date.getTime())) return 'sem-data';
       
       const dayOfWeek = date.getDay();
@@ -49,54 +49,54 @@ export const Card: React.FC<CardProps> = ({ data }) => {
     transform,
     isDragging,
   } = useDraggable({
-    id: String(data.id),
+    id: String(data.id_programacao),
     data: {
-      weekDay: getWeekDay(weekDay),
-      order: data,
-      originalId: data.id, // Manter o ID original para debug
+      weekDay: getWeekDay(data_termino),
+      programacao: data,
+      originalId: data.id_programacao, // Manter o ID original para debug
     },
     disabled: isMoving, // Desabilitar drag durante movimentação
   });
 
   // Função para extrair todos os valores de status (para arrays)
-  const getAllStatusValues = (status: any): string[] => {
-    if (Array.isArray(status)) {
+  const getAllStatusValues = (setoresAtuais: any): string[] => {
+    if (Array.isArray(setoresAtuais)) {
       // Se for array, retorna todos os items
-      return status.map(item => String(item).toLowerCase());
+      return setoresAtuais.map(item => String(item).toLowerCase());
     }
-    if (typeof status === 'string') {
+    if (typeof setoresAtuais === 'string') {
       // Se for string direta ou JSON string
       try {
         // Tenta fazer parse se for JSON string
-        const parsed = JSON.parse(status);
+        const parsed = JSON.parse(setoresAtuais);
         if (Array.isArray(parsed)) {
           return parsed.map(item => String(item).toLowerCase());
         }
-        return [(parsed.value || parsed.status || status).toLowerCase()];
+        return [(parsed.value || parsed.setor || setoresAtuais).toLowerCase()];
       } catch {
         // Se não ser JSON, retorna a string limpa
-        return [status.replace(/['"]/g, '').toLowerCase()];
+        return [setoresAtuais.replace(/['"]/g, '').toLowerCase()];
       }
-    } else if (typeof status === 'object' && status !== null) {
-      return [(status.value || status.status || 'indefinido').toLowerCase()];
+    } else if (typeof setoresAtuais === 'object' && setoresAtuais !== null) {
+      return [(setoresAtuais.value || setoresAtuais.setor || 'indefinido').toLowerCase()];
     }
     return ['indefinido'];
   };
 
   // Função para extrair o valor do status (mantendo compatibilidade com código existente)
-  const getStatusValue = (status: any): string => {
-    const allStatus = getAllStatusValues(status);
+  const getStatusValue = (setoresAtuais: any): string => {
+    const allStatus = getAllStatusValues(setoresAtuais);
     return allStatus[0] || 'indefinido';
   };
 
   // Função para calcular dias restantes
   const calcularDiasPrazo = (): { emAtraso: boolean; dias: number; ehHoje: boolean } => {
-    if (!weekDay) {
+    if (!data_termino) {
       return { emAtraso: false, dias: 0, ehHoje: false };
     }
 
     try {
-      const targetDate = new Date(weekDay);
+      const targetDate = new Date(data_termino);
       const today = new Date();
       
       // Normaliza as datas para o início do dia
@@ -140,11 +140,11 @@ export const Card: React.FC<CardProps> = ({ data }) => {
   ];
 
   const handleMenuClick = ({ key }: { key: string }) => {
-    console.log(`Ação ${key} para ordem ${ref} (ID: ${data.id})`);
+    console.log(`Ação ${key} para programação ${referencia} (ID: ${data.id_programacao})`);
     // Aqui você pode implementar as ações
   };
 
-  const statusValues = getAllStatusValues(status);
+  const statusValues = getAllStatusValues(setores_atuais);
   const { emAtraso, dias, ehHoje } = calcularDiasPrazo();
 
   // Estilo para transformação durante o drag
@@ -188,7 +188,7 @@ export const Card: React.FC<CardProps> = ({ data }) => {
         {/* Imagem do produto */}
         <div className="kanban-card-image-section">
           <div className="kanban-card-image-wrapper">
-            {/* Status atual sobreposto - agora mostra todos os status */}
+            {/* Status atual sobreposto - agora mostra todos os setores */}
             <div className="kanban-card-status-overlay">
               <div className="status-badges-stack">
                 {statusValues.map((statusValue, index) => (
@@ -199,10 +199,10 @@ export const Card: React.FC<CardProps> = ({ data }) => {
               </div>
             </div>
             
-            {imageUrl ? (
+            {foto_piloto_url ? (
               <img
-                src={imageUrl}
-                alt={produto || 'Produto'}
+                src={foto_piloto_url}
+                alt={referencia || 'Produto'}
                 className="kanban-card-product-image"
               />
             ) : (
@@ -226,7 +226,7 @@ export const Card: React.FC<CardProps> = ({ data }) => {
               </span>
 
               <span className="badge badge-secondary">
-                PEDIDO
+                {tipo_op || 'PROGRAMAÇÃO'}
               </span>
 
               {/* Badge de sucesso quando foi movido */}
@@ -237,15 +237,18 @@ export const Card: React.FC<CardProps> = ({ data }) => {
               )}
             </div>
 
-            {/* Informações detalhadas */}
+            {/* Informações detalhadas - apenas campos solicitados */}
             <div className="kanban-card-details-adapted">
-              <p>Ref: <span className="detail-value-adapted">{ref || `#${data.id}`}</span></p>
-              <p>Op Interna: <span className="detail-value-adapted">{opInterna || '-'}</span></p>
-              {opCliente && (
-                <p>Op Cliente: <span className="detail-value-adapted">{opCliente}</span></p>
+              <p>Ref: <span className="detail-value-adapted">{referencia || `#${data.id_programacao}`}</span></p>
+              <p>Op Interna: <span className="detail-value-adapted">{op_interna || '-'}</span></p>
+              {op_cliente && (
+                <p>Op Cliente: <span className="detail-value-adapted">{op_cliente}</span></p>
               )}
-              {qtd && (
-                <p>Qtd: <span className="detail-value-adapted">{qtd.toLocaleString()}</span></p>
+              {qtd_op && (
+                <p>Qtd: <span className="detail-value-adapted">{qtd_op.toLocaleString()}</span></p>
+              )}
+              {tipo_op && (
+                <p>Tipo: <span className="detail-value-adapted">{tipo_op}</span></p>
               )}
             </div>
           </div>

@@ -1,56 +1,71 @@
 import { defineCollection } from '@nocobase/database';
 
 export default defineCollection({
-  name: 'production_orders',
+  name: 'programacoes',
   createdBy: true,
   updatedBy: true,
   createdAt: true,
   updatedAt: true,
   fields: [
     {
-      type: 'string',
-      name: 'ref',
-      allowNull: true,
-    },
-    {
-      type: 'string', 
-      name: 'opInterna',
-      allowNull: true,
-    },
-    {
-      type: 'string',
-      name: 'opCliente', 
-      allowNull: true,
-    },
-    {
       type: 'bigInt',
-      name: 'qtd',
-      allowNull: true,
-    },
-    {
-      type: 'json',
-      name: 'status',
-      allowNull: true,
+      name: 'id_programacao',
+      primaryKey: true,
+      allowNull: false,
     },
     {
       type: 'date',
-      name: 'weekDay',
+      name: 'data_termino',
       allowNull: true,
+      comment: 'Data de término da programação (agregador para o kanban)',
+    },
+    {
+      type: 'string', 
+      name: 'op_interna',
+      allowNull: true,
+      comment: 'Ordem de produção interna',
     },
     {
       type: 'string',
-      name: 'produto',
+      name: 'op_cliente', 
       allowNull: true,
+      comment: 'Ordem de produção do cliente',
+    },
+    {
+      type: 'integer',
+      name: 'qtd_op',
+      allowNull: true,
+      comment: 'Quantidade da ordem de produção',
+    },
+    {
+      type: 'json',
+      name: 'setores_atuais',
+      allowNull: true,
+      comment: 'Lista de status/setores atuais',
     },
     {
       type: 'string',
-      name: 'priority',
+      name: 'referencia',
       allowNull: true,
+      comment: 'Referência do produto',
+    },
+    {
+      type: 'string',
+      name: 'tipo_op',
+      allowNull: true,
+      comment: 'Tipo da ordem de produção',
+    },
+    {
+      type: 'boolean',
+      name: 'status_impresso',
+      allowNull: true,
+      comment: 'Status para impressão do card',
     },
     {
       type: 'text',
-      name: 'imageUrl',
+      name: 'foto_piloto_url',
       allowNull: true,
+      comment: 'URL da foto piloto do produto',
     },
   ],
 }); 

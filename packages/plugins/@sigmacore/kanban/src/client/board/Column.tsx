@@ -1,12 +1,12 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { Card } from './Card';
-import { ProductionOrder } from '../KanbanBlockProvider';
+import { Programacao } from '../KanbanBlockProvider';
 import { WorkloadIndicator } from '../components/WorkloadIndicator';
 
 export interface ColumnProps {
   title: string;
-  data: ProductionOrder[];
+  data: Programacao[];
   columnKey: string;
   backgroundColor?: string;
   isToday?: boolean;
@@ -54,10 +54,10 @@ export const Column: React.FC<ColumnProps> = ({
           width: '100%'
         }}
       >
-        {data.map((order) => (
+        {data.map((programacao) => (
           <Card
-            key={order.id}
-            data={order}
+            key={programacao.id_programacao}
+            data={programacao}
           />
         ))}
         
@@ -65,7 +65,7 @@ export const Column: React.FC<ColumnProps> = ({
           <div className="kanban-column-empty">
             <div className="kanban-column-empty-content">
               <span className="kanban-column-empty-text">
-                Nenhuma ordem programada para {title.toLowerCase()}
+                Nenhuma programação para {title.toLowerCase()}
               </span>
               {isOver && (
                 <span className="kanban-column-drop-hint">

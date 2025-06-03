@@ -4,8 +4,8 @@ import { useWeekNavigation } from './useWeekNavigation';
 
 export interface UseDragAndDropProps {
   weekNavigation: ReturnType<typeof useWeekNavigation>;
-  moveCard: (orderId: string | number, targetWeekDay: string) => Promise<void>;
-  onSuccess?: (orderId: string | number, targetWeekDay: string) => void;
+  moveCard: (programacaoId: string | number, targetWeekDay: string) => Promise<void>;
+  onSuccess?: (programacaoId: string | number, targetWeekDay: string) => void;
   onError?: (error: string) => void;
 }
 
@@ -37,47 +37,47 @@ export const useDragAndDrop = ({ weekNavigation, moveCard, onSuccess, onError }:
       return;
     }
 
-    const orderId = active.id as string;
+    const programacaoId = active.id as string;
     const targetWeekDay = over.id as string;
 
     console.log(`📋 Processando drag end:`);
-    console.log(`   - orderId: "${orderId}" (tipo: ${typeof orderId})`);
+    console.log(`   - programacaoId: "${programacaoId}" (tipo: ${typeof programacaoId})`);
     console.log(`   - targetWeekDay: "${targetWeekDay}"`);
     console.log(`   - active.id original: "${active.id}" (tipo: ${typeof active.id})`);
     console.log(`   - active.data.current:`, active.data.current);
 
-    // Tentar usar o ID original da order se disponível
-    const originalOrderId = active.data.current?.originalId;
-    const finalOrderId = originalOrderId !== undefined ? originalOrderId : orderId;
+    // Tentar usar o ID original da programação se disponível
+    const originalProgramacaoId = active.data.current?.originalId;
+    const finalProgramacaoId = originalProgramacaoId !== undefined ? originalProgramacaoId : programacaoId;
     
-    console.log(`🔄 ID final para busca: "${finalOrderId}" (tipo: ${typeof finalOrderId})`);
+    console.log(`🔄 ID final para busca: "${finalProgramacaoId}" (tipo: ${typeof finalProgramacaoId})`);
 
     // Verificar se o card já está no dia correto da semana sendo exibida
-    const currentOrderData = active.data.current;
-    if (currentOrderData?.weekDay) {
-      const currentWeekDay = weekNavigation.getWeekDayFromDate(currentOrderData.weekDay);
+    const currentProgramacaoData = active.data.current;
+    if (currentProgramacaoData?.weekDay) {
+      const currentWeekDay = weekNavigation.getWeekDayFromDate(currentProgramacaoData.weekDay);
       if (currentWeekDay === targetWeekDay) {
-        console.log('ℹ️ Order dropped in same day of the week, no action needed');
+        console.log('ℹ️ Programação dropped in same day of the week, no action needed');
         return;
       }
     }
 
     try {
-      console.log(`🔄 Iniciando movimentação da ordem ${finalOrderId} para ${targetWeekDay}...`);
+      console.log(`🔄 Iniciando movimentação da programação ${finalProgramacaoId} para ${targetWeekDay}...`);
       
       // Usar a função moveCard que já faz toda a lógica
-      await moveCard(finalOrderId, targetWeekDay);
+      await moveCard(finalProgramacaoId, targetWeekDay);
       
       console.log(`✅ Movimentação concluída com sucesso!`);
       
       if (onSuccess) {
-        onSuccess(finalOrderId, targetWeekDay);
+        onSuccess(finalProgramacaoId, targetWeekDay);
       }
     } catch (error) {
       console.error('❌ Erro durante movimentação:', error);
       
       if (onError) {
-        onError(`Erro ao reprogramar ordem ${finalOrderId}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+        onError(`Erro ao reprogramar programação ${finalProgramacaoId}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
       }
     }
   };

@@ -3,12 +3,12 @@ import { Button, Dropdown, Modal, Select, DatePicker, message } from 'antd';
 import { DownloadOutlined, FilePdfOutlined, FileExcelOutlined } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { ProductionOrder, useKanbanBlockContext } from '../KanbanBlockProvider';
+import { Programacao, useKanbanBlockContext } from '../KanbanBlockProvider';
 import { getAllStatusValues, formatStatusLabel } from '../utils/statusUtils';
 
 export interface ExportButtonProps {
-  data: ProductionOrder[];
-  filteredData: ProductionOrder[];
+  data: Programacao[];
+  filteredData: Programacao[];
   selectedStatuses: string[];
   viewMode: 'weekly' | 'monthly';
 }
@@ -31,7 +31,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
   const [includeFilters, setIncludeFilters] = useState(true);
   const [includeOverdue, setIncludeOverdue] = useState(true);
   
-  // Obter as ordens em atraso do contexto
+  // Obter as programações em atraso do contexto
   const { overdueCards } = useKanbanBlockContext();
 
   // Função para gerar dados do relatório
@@ -39,75 +39,75 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
     const [startDate, endDate] = dateRange;
     const dataToExport = includeFilters ? filteredData : data;
     
-    console.log('📊 Exportação - dataToExport original:', dataToExport.length, 'ordens');
+    console.log('📊 Exportação - dataToExport original:', dataToExport.length, 'programações');
     console.log('📊 Exportação - período selecionado:', startDate.format('YYYY-MM-DD'), 'até', endDate.format('YYYY-MM-DD'));
     
     // Filtrar por período selecionado - CORRIGIDO
-    let filteredByDate = dataToExport.filter(order => {
-      if (!order.weekDay) {
-        console.log('❌ Ordem sem data:', order.id, order.ref);
+    let filteredByDate = dataToExport.filter(programacao => {
+      if (!programacao.data_termino) {
+        console.log('❌ Programação sem data:', programacao.id_programacao, programacao.referencia);
         return false;
       }
       
       try {
-        const orderDate = dayjs(order.weekDay);
+        const programacaoDate = dayjs(programacao.data_termino);
         // Normalizar para comparação apenas de datas (sem horas)
-        const orderDateStr = orderDate.format('YYYY-MM-DD');
+        const programacaoDateStr = programacaoDate.format('YYYY-MM-DD');
         const startDateStr = startDate.format('YYYY-MM-DD');
         const endDateStr = endDate.format('YYYY-MM-DD');
         
-        const isAfterOrEqualStart = orderDateStr >= startDateStr;
-        const isBeforeOrEqualEnd = orderDateStr <= endDateStr;
+        const isAfterOrEqualStart = programacaoDateStr >= startDateStr;
+        const isBeforeOrEqualEnd = programacaoDateStr <= endDateStr;
         const isInRange = isAfterOrEqualStart && isBeforeOrEqualEnd;
         
         // Log detalhado para debug
         if (isInRange) {
-          console.log('✅ Ordem dentro do período:', order.id, order.ref, orderDateStr);
+          console.log('✅ Programação dentro do período:', programacao.id_programacao, programacao.referencia, programacaoDateStr);
         }
         
         return isInRange;
       } catch (e) {
-        console.error('❌ Erro ao processar data da ordem:', order.id, order.weekDay, e);
+        console.error('❌ Erro ao processar data da programação:', programacao.id_programacao, programacao.data_termino, e);
         return false;
       }
     });
     
-    // Adicionar ordens em atraso se necessário
+    // Adicionar programações em atraso se necessário
     if (includeOverdue && overdueCards.length > 0) {
-      console.log('📊 Exportação - incluindo ordens em atraso:', overdueCards.length);
+      console.log('📊 Exportação - incluindo programações em atraso:', overdueCards.length);
       
       // Verificar se já não existem nos dados filtrados
-      const filteredIds = new Set(filteredByDate.map(order => order.id));
-      const newOverdueCards = overdueCards.filter(order => !filteredIds.has(order.id));
+      const filteredIds = new Set(filteredByDate.map(programacao => programacao.id_programacao));
+      const newOverdueCards = overdueCards.filter(programacao => !filteredIds.has(programacao.id_programacao));
       
       // Concatenar
       filteredByDate = [...filteredByDate, ...newOverdueCards];
       
-      console.log('📊 Exportação - adicionadas', newOverdueCards.length, 'ordens em atraso');
+      console.log('📊 Exportação - adicionadas', newOverdueCards.length, 'programações em atraso');
     }
     
-    console.log('📊 Exportação - filteredByDate:', filteredByDate.length, 'ordens após filtro de data e inclusão de atrasados');
+    console.log('📊 Exportação - filteredByDate:', filteredByDate.length, 'programações após filtro de data e inclusão de atrasados');
 
     // Agrupar por data
-    const groupedByDate: Record<string, ProductionOrder[]> = {};
-    filteredByDate.forEach(order => {
+    const groupedByDate: Record<string, Programacao[]> = {};
+    filteredByDate.forEach(programacao => {
       // Garantir formato consistente de data
-      const dateKey = dayjs(order.weekDay).format('YYYY-MM-DD');
+      const dateKey = dayjs(programacao.data_termino).format('YYYY-MM-DD');
       if (!groupedByDate[dateKey]) {
         groupedByDate[dateKey] = [];
       }
-      groupedByDate[dateKey].push(order);
+      groupedByDate[dateKey].push(programacao);
     });
 
     console.log('📊 Exportação - groupedByDate:', Object.keys(groupedByDate).length, 'dias diferentes');
 
     // Calcular estatísticas
     const totalOrders = filteredByDate.length;
-    const totalQuantity = filteredByDate.reduce((sum, order) => sum + (order.qtd || 0), 0);
+    const totalQuantity = filteredByDate.reduce((sum, programacao) => sum + (programacao.qtd_op || 0), 0);
     
     const statusDistribution: Record<string, number> = {};
-    filteredByDate.forEach(order => {
-      const statuses = getAllStatusValues(order.status);
+    filteredByDate.forEach(programacao => {
+      const statuses = getAllStatusValues(programacao.setores_atuais);
       statuses.forEach(status => {
         statusDistribution[status] = (statusDistribution[status] || 0) + 1;
       });
@@ -143,19 +143,19 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
         return;
       }
       
-      // Identificar ordens em atraso para destaque especial
+      // Identificar programações em atraso para destaque especial
       const today = dayjs().startOf('day');
       const overdueOrderIds = new Set(
         reportData.filteredByDate
-          .filter(order => {
+          .filter(programacao => {
             try {
-              const orderDate = dayjs(order.weekDay).startOf('day');
-              return orderDate.isBefore(today);
+              const programacaoDate = dayjs(programacao.data_termino).startOf('day');
+              return programacaoDate.isBefore(today);
             } catch {
               return false;
             }
           })
-          .map(order => order.id)
+          .map(programacao => programacao.id_programacao)
       );
       
       // Criar conteúdo HTML para o PDF
@@ -202,7 +202,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
             <div class="summary-grid">
               <div class="summary-item">
                 <div class="summary-value">${reportData.totalOrders}</div>
-                <div class="summary-label">Total de Ordens</div>
+                <div class="summary-label">Total de Programações</div>
               </div>
               <div class="summary-item">
                 <div class="summary-value">${reportData.totalQuantity.toLocaleString()}</div>
@@ -214,18 +214,18 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
               </div>
               <div class="summary-item">
                 <div class="summary-value">${overdueOrderIds.size}</div>
-                <div class="summary-label">Ordens em Atraso</div>
+                <div class="summary-label">Programações em Atraso</div>
               </div>
             </div>
           </div>
 
           ${
-            // Seção para ordens em atraso
+            // Seção para programações em atraso
             overdueOrderIds.size > 0 
             ? `
               <div class="day-section">
                 <div class="overdue-header">
-                  <h3>Ordens em Atraso (${overdueOrderIds.size} ordens)</h3>
+                  <h3>Programações em Atraso (${overdueOrderIds.size} programações)</h3>
                 </div>
                 <table class="orders-table">
                   <thead>
@@ -235,22 +235,22 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
                       <th>Op Cliente</th>
                       <th>Quantidade</th>
                       <th>Status</th>
-                      <th>Produto</th>
+                      <th>Tipo</th>
                       <th>Data Programada</th>
                     </tr>
                   </thead>
                   <tbody>
                     ${reportData.filteredByDate
-                      .filter(order => overdueOrderIds.has(order.id))
-                      .map(order => `
+                      .filter(programacao => overdueOrderIds.has(programacao.id_programacao))
+                      .map(programacao => `
                         <tr class="overdue-row">
-                          <td>${order.ref || `#${order.id}`}</td>
-                          <td>${order.opInterna || '-'}</td>
-                          <td>${order.opCliente || '-'}</td>
-                          <td>${order.qtd ? order.qtd.toLocaleString() : '-'}</td>
-                          <td>${getAllStatusValues(order.status).map(s => formatStatusLabel(s)).join(', ')}</td>
-                          <td>${order.produto || '-'}</td>
-                          <td>${order.weekDay ? dayjs(order.weekDay).format('DD/MM/YYYY') : '-'}</td>
+                          <td>${programacao.referencia || `#${programacao.id_programacao}`}</td>
+                          <td>${programacao.op_interna || '-'}</td>
+                          <td>${programacao.op_cliente || '-'}</td>
+                          <td>${programacao.qtd_op ? programacao.qtd_op.toLocaleString() : '-'}</td>
+                          <td>${getAllStatusValues(programacao.setores_atuais).map(s => formatStatusLabel(s)).join(', ')}</td>
+                          <td>${programacao.tipo_op || '-'}</td>
+                          <td>${programacao.data_termino ? dayjs(programacao.data_termino).format('DD/MM/YYYY') : '-'}</td>
                         </tr>
                       `).join('')}
                   </tbody>
@@ -260,7 +260,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
             : ''
           }
 
-          <h3>Ordens por Data</h3>
+          <h3>Programações por Data</h3>
           ${
             Object.keys(reportData.groupedByDate).length === 0 
             ? `<div style="text-align: center; padding: 20px; color: #999;">
@@ -268,10 +268,10 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
                </div>`
             : Object.entries(reportData.groupedByDate)
               .sort(([a], [b]) => a.localeCompare(b))
-              .map(([date, orders]) => `
+              .map(([date, programações]) => `
                 <div class="day-section">
                   <div class="day-header">
-                    <h3>${dayjs(date).format('dddd, DD/MM/YYYY')} (${orders.length} ordens)</h3>
+                    <h3>${dayjs(date).format('dddd, DD/MM/YYYY')} (${programações.length} programações)</h3>
                   </div>
                   <table class="orders-table">
                     <thead>
@@ -281,18 +281,18 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
                         <th>Op Cliente</th>
                         <th>Quantidade</th>
                         <th>Status</th>
-                        <th>Produto</th>
+                        <th>Tipo</th>
                       </tr>
                     </thead>
                     <tbody>
-                      ${orders.map(order => `
-                        <tr ${overdueOrderIds.has(order.id) ? 'class="overdue-row"' : ''}>
-                          <td>${order.ref || `#${order.id}`}</td>
-                          <td>${order.opInterna || '-'}</td>
-                          <td>${order.opCliente || '-'}</td>
-                          <td>${order.qtd ? order.qtd.toLocaleString() : '-'}</td>
-                          <td>${getAllStatusValues(order.status).map(s => formatStatusLabel(s)).join(', ')}</td>
-                          <td>${order.produto || '-'}</td>
+                      ${programações.map(programacao => `
+                        <tr ${overdueOrderIds.has(programacao.id_programacao) ? 'class="overdue-row"' : ''}>
+                          <td>${programacao.referencia || `#${programacao.id_programacao}`}</td>
+                          <td>${programacao.op_interna || '-'}</td>
+                          <td>${programacao.op_cliente || '-'}</td>
+                          <td>${programacao.qtd_op ? programacao.qtd_op.toLocaleString() : '-'}</td>
+                          <td>${getAllStatusValues(programacao.setores_atuais).map(s => formatStatusLabel(s)).join(', ')}</td>
+                          <td>${programacao.tipo_op || '-'}</td>
                         </tr>
                       `).join('')}
                     </tbody>
@@ -304,8 +304,8 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
           ${
             reportData.totalOrders > 0 && Object.keys(reportData.groupedByDate).length === 0 
             ? `<div style="text-align: center; padding: 20px; color: #ff4d4f; border: 1px dashed #ff4d4f; margin-top: 20px;">
-                <p><strong>Aviso:</strong> Existem ${reportData.totalOrders} ordens no período, mas não foi possível agrupá-las por data.</p>
-                <p>Verifique se as ordens possuem datas válidas.</p>
+                <p><strong>Aviso:</strong> Existem ${reportData.totalOrders} programações no período, mas não foi possível agrupá-las por data.</p>
+                <p>Verifique se as programações possuem datas válidas.</p>
                </div>`
             : ''
           }
@@ -314,7 +314,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
             reportData.filteredByDate.length > 0 && Object.keys(reportData.groupedByDate).length === 0 
             ? `
               <div style="margin-top: 30px;">
-                <h3>Lista de Todas as Ordens</h3>
+                <h3>Lista de Todas as Programações</h3>
                 <table class="orders-table">
                   <thead>
                     <tr>
@@ -323,18 +323,18 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
                       <th>Op Cliente</th>
                       <th>Quantidade</th>
                       <th>Status</th>
-                      <th>Produto</th>
+                      <th>Tipo</th>
                     </tr>
                   </thead>
                   <tbody>
-                    ${reportData.filteredByDate.map(order => `
-                      <tr ${overdueOrderIds.has(order.id) ? 'class="overdue-row"' : ''}>
-                        <td>${order.ref || `#${order.id}`}</td>
-                        <td>${order.opInterna || '-'}</td>
-                        <td>${order.opCliente || '-'}</td>
-                        <td>${order.qtd ? order.qtd.toLocaleString() : '-'}</td>
-                        <td>${getAllStatusValues(order.status).map(s => formatStatusLabel(s)).join(', ')}</td>
-                        <td>${order.produto || '-'}</td>
+                    ${reportData.filteredByDate.map(programacao => `
+                      <tr ${overdueOrderIds.has(programacao.id_programacao) ? 'class="overdue-row"' : ''}>
+                        <td>${programacao.referencia || `#${programacao.id_programacao}`}</td>
+                        <td>${programacao.op_interna || '-'}</td>
+                        <td>${programacao.op_cliente || '-'}</td>
+                        <td>${programacao.qtd_op ? programacao.qtd_op.toLocaleString() : '-'}</td>
+                        <td>${getAllStatusValues(programacao.setores_atuais).map(s => formatStatusLabel(s)).join(', ')}</td>
+                        <td>${programacao.tipo_op || '-'}</td>
                       </tr>
                     `).join('')}
                   </tbody>
@@ -382,19 +382,19 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
         return;
       }
       
-      // Identificar ordens em atraso
+      // Identificar programações em atraso
       const today = dayjs().startOf('day');
       const overdueOrderIds = new Set(
         reportData.filteredByDate
-          .filter(order => {
+          .filter(programacao => {
             try {
-              const orderDate = dayjs(order.weekDay).startOf('day');
-              return orderDate.isBefore(today);
+              const programacaoDate = dayjs(programacao.data_termino).startOf('day');
+              return programacaoDate.isBefore(today);
             } catch {
               return false;
             }
           })
-          .map(order => order.id)
+          .map(programacao => programacao.id_programacao)
       );
       
       // Criar dados para CSV (simulando Excel)
@@ -404,83 +404,83 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
         [`Gerado em: ${dayjs().format('DD/MM/YYYY HH:mm')}`],
         [''],
         ['Resumo Geral'],
-        ['Total de Ordens', reportData.totalOrders],
+        ['Total de Programações', reportData.totalOrders],
         ['Quantidade Total', reportData.totalQuantity],
         ['Dias com Produção', Object.keys(reportData.groupedByDate).length],
-        ['Ordens em Atraso', overdueOrderIds.size],
+        ['Programações em Atraso', overdueOrderIds.size],
         [''],
       ];
       
-      // Adicionar cabeçalho para ordens em atraso se houver
+      // Adicionar cabeçalho para programações em atraso se houver
       if (overdueOrderIds.size > 0) {
         csvData.push(
-          ['ORDENS EM ATRASO'],
-          ['Ref', 'Op Interna', 'Op Cliente', 'Quantidade', 'Status', 'Produto', 'Data Programada']
+          ['PROGRAMAÇÕES EM ATRASO'],
+          ['Ref', 'Op Interna', 'Op Cliente', 'Quantidade', 'Status', 'Tipo', 'Data Programada']
         );
         
-        // Adicionar ordens em atraso
+        // Adicionar programações em atraso
         reportData.filteredByDate
-          .filter(order => overdueOrderIds.has(order.id))
-          .forEach(order => {
+          .filter(programacao => overdueOrderIds.has(programacao.id_programacao))
+          .forEach(programacao => {
             try {
-              const formattedDate = order.weekDay 
-                ? dayjs(order.weekDay).format('DD/MM/YYYY') 
+              const formattedDate = programacao.data_termino 
+                ? dayjs(programacao.data_termino).format('DD/MM/YYYY') 
                 : '-';
                 
               csvData.push([
-                order.ref || `#${order.id}`,
-                order.opInterna || '-',
-                order.opCliente || '-',
-                String(order.qtd || 0),
-                getAllStatusValues(order.status).map(s => formatStatusLabel(s)).join(', '),
-                order.produto || '-',
+                programacao.referencia || `#${programacao.id_programacao}`,
+                programacao.op_interna || '-',
+                programacao.op_cliente || '-',
+                String(programacao.qtd_op || 0),
+                getAllStatusValues(programacao.setores_atuais).map(s => formatStatusLabel(s)).join(', '),
+                programacao.tipo_op || '-',
                 formattedDate
               ]);
             } catch (e) {
-              console.error('❌ Erro ao formatar data para Excel:', order.id, order.weekDay, e);
+              console.error('❌ Erro ao formatar data para Excel:', programacao.id_programacao, programacao.data_termino, e);
             }
           });
           
         csvData.push(['']);
       }
       
-      // Adicionar cabeçalho principal para todas as ordens
+      // Adicionar cabeçalho principal para todas as programações
       csvData.push(
-        ['TODAS AS ORDENS POR DATA'],
-        ['Data', 'Ref', 'Op Interna', 'Op Cliente', 'Quantidade', 'Status', 'Produto', 'Em Atraso']
+        ['TODAS AS PROGRAMAÇÕES POR DATA'],
+        ['Data', 'Ref', 'Op Interna', 'Op Cliente', 'Quantidade', 'Status', 'Tipo', 'Em Atraso']
       );
       
-      // Adicionar cada ordem com sua data formatada
+      // Adicionar cada programação com sua data formatada
       if (reportData.filteredByDate.length > 0) {
-        reportData.filteredByDate.forEach(order => {
+        reportData.filteredByDate.forEach(programacao => {
           try {
-            const formattedDate = order.weekDay 
-              ? dayjs(order.weekDay).format('DD/MM/YYYY') 
+            const formattedDate = programacao.data_termino 
+              ? dayjs(programacao.data_termino).format('DD/MM/YYYY') 
               : '-';
             
-            const isOverdue = overdueOrderIds.has(order.id);
+            const isOverdue = overdueOrderIds.has(programacao.id_programacao);
               
             csvData.push([
               formattedDate,
-              order.ref || `#${order.id}`,
-              order.opInterna || '-',
-              order.opCliente || '-',
-              String(order.qtd || 0),
-              getAllStatusValues(order.status).map(s => formatStatusLabel(s)).join(', '),
-              order.produto || '-',
+              programacao.referencia || `#${programacao.id_programacao}`,
+              programacao.op_interna || '-',
+              programacao.op_cliente || '-',
+              String(programacao.qtd_op || 0),
+              getAllStatusValues(programacao.setores_atuais).map(s => formatStatusLabel(s)).join(', '),
+              programacao.tipo_op || '-',
               isOverdue ? 'Sim' : 'Não'
             ]);
           } catch (e) {
-            console.error('❌ Erro ao formatar data para Excel:', order.id, order.weekDay, e);
+            console.error('❌ Erro ao formatar data para Excel:', programacao.id_programacao, programacao.data_termino, e);
             csvData.push([
               'Data inválida',
-              order.ref || `#${order.id}`,
-              order.opInterna || '-',
-              order.opCliente || '-',
-              String(order.qtd || 0),
-              getAllStatusValues(order.status).map(s => formatStatusLabel(s)).join(', '),
-              order.produto || '-',
-              overdueOrderIds.has(order.id) ? 'Sim' : 'Não'
+              programacao.referencia || `#${programacao.id_programacao}`,
+              programacao.op_interna || '-',
+              programacao.op_cliente || '-',
+              String(programacao.qtd_op || 0),
+              getAllStatusValues(programacao.setores_atuais).map(s => formatStatusLabel(s)).join(', '),
+              programacao.tipo_op || '-',
+              overdueOrderIds.has(programacao.id_programacao) ? 'Sim' : 'Não'
             ]);
           }
         });
@@ -567,7 +567,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
       >
         <div className="export-modal-content">
           <div className="export-info" style={{ marginBottom: '16px', padding: '8px', backgroundColor: '#f0f2ff', borderRadius: '4px' }}>
-            <p style={{ margin: 0 }}>Selecione o período e os dados que deseja exportar. O relatório incluirá todas as ordens dentro do período selecionado.</p>
+            <p style={{ margin: 0 }}>Selecione o período e os dados que deseja exportar. O relatório incluirá todas as programações dentro do período selecionado.</p>
           </div>
           
           <div className="export-option">
@@ -589,20 +589,20 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
               onChange={(value) => setIncludeFilters(value === 'filtered')}
               style={{ width: '100%' }}
               options={[
-                { value: 'all', label: `Todos os dados (${data.length} ordens)` },
-                { value: 'filtered', label: `Dados filtrados (${filteredData.length} ordens)` }
+                { value: 'all', label: `Todos os dados (${data.length} programações)` },
+                { value: 'filtered', label: `Dados filtrados (${filteredData.length} programações)` }
               ]}
             />
           </div>
 
           <div className="export-option">
-            <label>Incluir ordens em atraso:</label>
+            <label>Incluir programações em atraso:</label>
             <Select
               value={includeOverdue ? 'yes' : 'no'}
               onChange={(value) => setIncludeOverdue(value === 'yes')}
               style={{ width: '100%' }}
               options={[
-                { value: 'yes', label: `Sim (${overdueCards.length} ordens)` },
+                { value: 'yes', label: `Sim (${overdueCards.length} programações)` },
                 { value: 'no', label: 'Não' }
               ]}
             />
