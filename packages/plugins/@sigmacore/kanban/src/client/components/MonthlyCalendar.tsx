@@ -5,6 +5,7 @@ import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { Programacao } from '../KanbanBlockProvider';
 import { getAllStatusValues, getStatusColor, formatStatusLabel } from '../utils/statusUtils';
+import type { CalendarProps } from 'antd';
 
 export interface MonthlyCalendarProps {
   data: Programacao[];
@@ -35,9 +36,8 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
   }, [data]);
 
   // Função para renderizar o conteúdo de cada célula do calendário
-  const cellRender = (current: Dayjs, info: { type: 'date' | 'month'; originNode: React.ReactElement }) => {
-    if (info.type === 'month') {
-      // Para a visualização de mês, não fazemos customização adicional aqui, apenas retornamos o nó original
+  const cellRender: CalendarProps<Dayjs>['cellRender'] = (current, info) => {
+    if (info.type !== 'date') {
       return info.originNode;
     }
 
@@ -46,8 +46,6 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ data }) => {
     const ordersForDate = dataByDate[dateKey] || [];
     
     if (ordersForDate.length === 0) {
-      // Retorna o nó original da célula se não houver ordens, 
-      // para manter o comportamento padrão da célula (número do dia, etc.)
       return info.originNode; 
     }
 

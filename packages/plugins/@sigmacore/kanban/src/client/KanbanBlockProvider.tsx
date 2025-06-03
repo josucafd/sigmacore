@@ -222,10 +222,32 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   // Função para formatar data para o banco de dados considerando fuso horário
   const formatDateForDatabase = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}T12:00:00.000Z`;
+    try {
+      // Garantir que temos uma data válida
+      if (!date || isNaN(date.getTime())) {
+        console.error('❌ Data inválida para formatação:', date);
+        // Retornar data atual como fallback
+        const today = new Date();
+        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      }
+      
+      // Extrair componentes da data
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      // Formato para o banco: YYYY-MM-DD (sem a parte do tempo - o servidor adiciona isso)
+      // Importante: o servidor parece estar rejeitando formatos com T e Z 
+      const formattedDate = `${year}-${month}-${day}`;
+      
+      console.log(`🗓️ Data formatada para o banco: ${formattedDate}`);
+      return formattedDate;
+    } catch (e) {
+      console.error('❌ Erro ao formatar data para o banco:', e);
+      // Retornar data atual como fallback
+      const today = new Date();
+      return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    }
   };
 
   // Função para calcular a nova data baseada no dia da semana da semana sendo exibida
@@ -288,15 +310,21 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
       
       // 3. Chamar API em background
       console.log(`🌐 Chamando API para atualizar programação ${programacaoId}...`);
+      console.log(`📅 Data a ser enviada: ${newDate} (${typeof newDate})`);
+      
+      const apiPayload = {
+        data_termino: newDate,
+      };
+      
+      console.log(`📦 Payload para API:`, apiPayload);
+      
       await api.request({
         url: `programacoes:updateDataTermino`,
         method: 'POST',
         params: {
           filterByTk: programacaoId,
         },
-        data: {
-          data_termino: newDate,
-        },
+        data: apiPayload,
       });
 
       console.log(`✅ Programação ${programacaoId} movida com sucesso para ${targetWeekDay} - API confirmou`);
@@ -309,12 +337,18 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
       });
       setMovedCards(prev => new Set(prev).add(programacaoId));
       
+      // 5. Recarregar dados depois de um breve delay para garantir sincronização
       setTimeout(() => {
+        // Remover estado "movido" após alguns segundos
         setMovedCards(prev => {
           const newSet = new Set(prev);
           newSet.delete(programacaoId);
           return newSet;
         });
+        
+        // Recarregar dados do servidor para garantir sincronização
+        console.log(`🔄 Recarregando dados após movimentação bem-sucedida...`);
+        fetchData();
       }, 2000);
       
     } catch (error) {
