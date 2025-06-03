@@ -239,7 +239,7 @@ export const Card: React.FC<CardProps> = ({ data }) => {
 
             {/* Informações detalhadas - apenas campos solicitados */}
             <div className="kanban-card-details-adapted">
-              <p>Ref: <span className="detail-value-adapted">{referencia || `#${data.id_programacao}`}</span></p>
+              <p className="detail-ref">Ref: <span className="detail-value-adapted">{referencia || `#${data.id_programacao}`}</span></p>
               <p>Op Interna: <span className="detail-value-adapted">{op_interna || '-'}</span></p>
               {op_cliente && (
                 <p>Op Cliente: <span className="detail-value-adapted">{op_cliente}</span></p>
@@ -264,22 +264,6 @@ export const Card: React.FC<CardProps> = ({ data }) => {
               disabled={isMoving}
               {...listeners}
             />
-            
-            {/* Menu de ações */}
-            <Dropdown 
-              menu={{ items: menuItems, onClick: handleMenuClick }}
-              trigger={['click']}
-              placement="bottomRight"
-              disabled={isMoving}
-            >
-              <Button 
-                type="text" 
-                icon={<MoreOutlined />} 
-                size="small"
-                className="kanban-card-menu-adapted"
-                disabled={isMoving}
-              />
-            </Dropdown>
           </div>
         </div>
       </div>

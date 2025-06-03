@@ -50,7 +50,6 @@ export const Board: React.FC = () => {
         duration: 3,
         key: `move-${programacaoId}`, // Evita duplicar mensagens
       });
-      console.log(`✅ Sucesso: Programação ${programacaoId} movida para ${targetWeekDay}`);
     },
     onError: (errorMessage) => {
       message.error({
@@ -60,8 +59,6 @@ export const Board: React.FC = () => {
       });
     }
   });
-
-  console.log('📋 Board - columns:', columns, 'loading:', loading, 'error:', error);
 
   if (loading) {
     return (

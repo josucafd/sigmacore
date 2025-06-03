@@ -132,7 +132,7 @@ export const useWeekNavigation = () => {
       ];
       
       // Logging para debug
-      console.log(`🗓️ Conversão de data: ${dateStr} => ${localDate.toISOString().split('T')[0]} => ${weekDays[dayOfWeek]}`);
+      // console.log(`🗓️ Conversão de data: ${dateStr} => ${localDate.toISOString().split('T')[0]} => ${weekDays[dayOfWeek]}`);
       
       return weekDays[dayOfWeek];
     } catch (e) {
@@ -178,7 +178,7 @@ export const useWeekNavigation = () => {
       };
       
       const result = dateWeekStart.getTime() === currentWeekStart.getTime();
-      console.log(`📅 Verificação de semana: ${dateStr} => Início da semana: ${safeISOString(dateWeekStart)} vs ${safeISOString(currentWeekStart)} = ${result}`);
+      // console.log(`📅 Verificação de semana: ${dateStr} => Início da semana: ${safeISOString(dateWeekStart)} vs ${safeISOString(currentWeekStart)} = ${result}`);
       
       return result;
     } catch (e) {
