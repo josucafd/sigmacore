@@ -13,6 +13,7 @@ export interface Programacao {
   referencia: string;
   tipo_op: string;
   status_impresso: string;
+  status_op?: string; // Status da operação (ex: 'EM PRODUÇÃO')
   foto_piloto_url?: string;
   createdAt?: string;
   updatedAt?: string;

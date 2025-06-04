@@ -269,4 +269,59 @@ export const Card: React.FC<CardProps> = ({ data }) => {
       </div>
     </div>
   );
+};
+
+// Componente para exportação/print (sem status/dias)
+export const PrintableCard: React.FC<CardProps> = ({ data }) => {
+  const { referencia, op_interna, op_cliente, qtd_op, tipo_op, foto_piloto_url } = data;
+
+  return (
+    <div
+      style={{
+        width: '200px',
+        minWidth: '200px',
+        maxWidth: '200px',
+        flex: '0 0 auto',
+        marginRight: '10px',
+        marginBottom: '16px',
+      }}
+      className="kanban-card-container"
+    >
+      <div className="kanban-card-adapted">
+        {/* Imagem do produto */}
+        <div className="kanban-card-image-section">
+          <div className="kanban-card-image-wrapper">
+            {foto_piloto_url ? (
+              <img
+                src={foto_piloto_url}
+                alt={referencia || 'Produto'}
+                className="kanban-card-product-image"
+              />
+            ) : (
+              <div className="kanban-card-no-image">Sem foto</div>
+            )}
+          </div>
+        </div>
+        {/* Informações da programação */}
+        <div className="kanban-card-info-section">
+          <div className="kanban-card-content-space">
+            {/* Informações detalhadas - apenas campos solicitados */}
+            <div className="kanban-card-details-adapted">
+              <p className="detail-ref">Ref: <span className="detail-value-adapted">{referencia || `#${data.id_programacao}`}</span></p>
+              <p>Op Interna: <span className="detail-value-adapted">{op_interna || '-'}</span></p>
+              {op_cliente && (
+                <p>Op Cliente: <span className="detail-value-adapted">{op_cliente}</span></p>
+              )}
+              {qtd_op && (
+                <p>Qtd: <span className="detail-value-adapted">{qtd_op.toLocaleString()}</span></p>
+              )}
+              {tipo_op && (
+                <p>Tipo: <span className="detail-value-adapted">{tipo_op}</span></p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }; 

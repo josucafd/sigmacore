@@ -4,4 +4,5 @@ export { DragOverlay } from './DragOverlay';
 export { MonthlyCalendar } from './MonthlyCalendar';
 export { ViewToggle } from './ViewToggle';
 export { ExportButton } from './ExportButton';
-export { WeekNavigation } from './WeekNavigation'; 
+export { WeekNavigation } from './WeekNavigation';
+export { PrintableCard } from '../board/Card'; 
