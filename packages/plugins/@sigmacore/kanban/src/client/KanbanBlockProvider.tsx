@@ -53,7 +53,7 @@ export interface KanbanContextType {
 // Context
 const KanbanBlockContext = createContext<KanbanContextType | null>(null);
 
-export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const KanbanBlockProvider: React.FC<{ children: React.ReactNode; collection?: string }> = ({ children, collection = 'programacoes_kanban' }) => {
   const [data, setData] = useState<Programacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,14 +101,14 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return false;
   }, []);
 
-  // Função para buscar dados da API usando a nova action customizada
+  // Função para buscar dados da API usando a collection recebida por prop
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
       const response = await api.request({
-        url: 'programacoes:kanbanData',
+        url: collection,
         method: 'GET',
       });
       
@@ -170,7 +170,7 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
     } finally {
       setLoading(false);
     }
-  }, [api]);
+  }, [api, collection]);
 
   // Função para formatar data para o banco de dados considerando fuso horário
   const formatDateForDatabase = (date: Date): string => {

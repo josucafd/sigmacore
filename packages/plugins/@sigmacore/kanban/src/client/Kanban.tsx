@@ -11,7 +11,7 @@ export interface KanbanProps {
 
 export const Kanban: React.FC<KanbanProps> = (props) => {
   return (
-    <KanbanBlockProvider {...props}>
+    <KanbanBlockProvider {...props} collection={props.collection}>
       <Board />
     </KanbanBlockProvider>
   );
