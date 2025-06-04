@@ -13,6 +13,7 @@ export interface Programacao {
   referencia: string;
   tipo_op: string;
   status_impresso: string;
+  status_op?: string; // Status da operação (ex: 'EM PRODUÇÃO')
   foto_piloto_url?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -148,7 +149,7 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode; collecti
           if (foundArray && foundArray.length > 0) {
             programacoes = foundArray;
           } else {
-            console.warn('❌ Nenhum array encontrado na resposta');
+            // console.warn('❌ Nenhum array encontrado na resposta');
           }
         }
         

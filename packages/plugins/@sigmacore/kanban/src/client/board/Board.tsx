@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Spin, Alert, Button, message, Badge, Empty } from 'antd';
 import { ReloadOutlined, DownCircleOutlined, UpCircleOutlined, RightOutlined } from '@ant-design/icons';
 import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core';
@@ -32,6 +32,13 @@ export const Board: React.FC = () => {
   } = useKanbanBlockContext();
 
   const [viewMode, setViewMode] = useState<ViewMode>('weekly');
+
+  // Definir título da página dinamicamente
+  useEffect(() => {
+    document.title = viewMode === 'monthly'
+      ? 'Kanban de Produção - Mensal'
+      : 'Kanban de Produção - Semanal';
+  }, [viewMode]);
 
   // Hook para gerenciar drag & drop simplificado
   const {
