@@ -46,27 +46,17 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filteredData, 
   // Efeito para verificar se o contador é zero mas deveria ter cards
   useEffect(() => {
     const checkAndRefreshIfNeeded = async () => {
-      // Se o contador for zero e não estiver carregando, verificar diretamente
       if (pendingCardCount === 0 && !checkingPending) {
         try {
-          console.log('🔄 Verificação de consistência: contador de cards é zero, checando API diretamente...');
           const response = await api.request({ url: 'programacoes:paraImpressao', method: 'GET' });
-          
           let hasCardsInResponse = false;
-          
-          // Verificar os caminhos possíveis
           if (response?.data?.data?.data && Array.isArray(response.data.data.data) && response.data.data.data.length > 0) {
             hasCardsInResponse = true;
-            console.log('🔄 Verificação detectou cards no caminho aninhado:', response.data.data.data.length);
           } else {
             const extractedCards = extractCardsFromResponse(response);
             hasCardsInResponse = extractedCards.length > 0;
-            console.log('🔄 Verificação com extrator padrão:', extractedCards.length);
           }
-          
-          // Se houver uma discrepância, forçar a atualização
           if (hasCardsInResponse && pendingCardCount === 0) {
-            console.log('⚠️ Inconsistência detectada: API tem cards mas contador mostra zero. Atualizando...');
             refreshPendingCount();
           }
         } catch (err) {
@@ -118,40 +108,25 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filteredData, 
   };
 
   const handlePrintableCards = async () => {
-    console.log('🔍 Verificando cards disponíveis para impressão...');
-    
     try {
-      // Primeiro, tenta obter da API
       try {
         const response = await api.request({ url: 'programacoes:paraImpressao', method: 'GET' });
         const apiCards = extractCardsFromResponse(response);
-        
         if (apiCards && apiCards.length > 0) {
-          console.log('✅ Cards não impressos disponíveis via API:', apiCards.length);
           setShowPrintOptions(true);
           return;
         }
       } catch (apiError) {
         console.error('❌ Erro ao buscar da API, verificando dados locais:', apiError);
       }
-      
-      // Se não encontrou pela API, verifica nos dados locais
       if (data && data.length > 0) {
-        // Verifica status_impresso nos dados do Kanban
         const notPrintedCards = data.filter(card => 
-          card.status_impresso === 'false' || 
-          card.status_impresso === undefined || 
-          card.status_impresso === null || 
-          card.status_impresso === ''
+          !card.status_impresso || card.status_impresso === 'false' || card.status_impresso === null || card.status_impresso === undefined
         );
-        
-        console.log(`🔍 Verificação local: ${notPrintedCards.length} cards não impressos de ${data.length} total`);
-        
         if (notPrintedCards.length > 0) {
           setShowPrintOptions(true);
           return;
         }
-        
         message.info('Não há cards não impressos disponíveis para impressão');
       } else {
         message.info('Não há cards disponíveis no Kanban');
@@ -166,69 +141,24 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filteredData, 
     setPrinting(true);
     setShowPrintOptions(false);
     try {
-      console.log('🖨️ Iniciando exportação de cards para impressão...');
-      
-      // Tentar usar a API melhorada que agora tem diagnóstico e fallback
-      console.log('🖨️ Tentando API para cards não impressos...');
-      
       const response = await api.request({ 
         url: 'programacoes:paraImpressao', 
         method: 'GET' 
       });
-      
-      // Processar a resposta
       let cardsFromApi: Programacao[] = [];
-      
       if (response?.data?.data && Array.isArray(response.data.data)) {
         cardsFromApi = response.data.data;
-        console.log('✅ Cards da API com diagnóstico melhorado:', cardsFromApi.length);
       } else {
-        // Tentar extrair com extrator genérico
         cardsFromApi = extractCardsFromResponse(response);
-        console.log('✅ Cards extraídos pelo extrator genérico:', cardsFromApi.length);
       }
-      
-      // Diagnóstico dos dados que vêm da API
       if (cardsFromApi.length > 0) {
-        // Verificar estrutura dos primeiros 3 registros
-        console.log('🔍 Amostra dos primeiros registros da API:');
-        const sampleCards = cardsFromApi.slice(0, 3);
-        sampleCards.forEach((card, index) => {
-          console.log(`Card #${index + 1}:`, {
-            id: card.id_programacao,
-            referencia: card.referencia,
-            status_impresso: card.status_impresso,
-            tipo_status_impresso: typeof card.status_impresso
-          });
-        });
-        
-        // Contagem de valores status_impresso
-        const statusMap = cardsFromApi.reduce((acc, card) => {
-          const status = String(card.status_impresso);
-          acc[status] = (acc[status] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>);
-        
-        console.log('🔍 Diagnóstico de status_impresso da API:', statusMap);
       }
-      
-      // IMPORTANTE: Filtrar explicitamente por status_impresso = false mesmo nos dados da API
-      const cardsForPrinting = cardsFromApi.filter(card => card.status_impresso === false || card.status_impresso == null);
-      console.log(`🔍 Filtragem explícita no frontend: ${cardsForPrinting.length} cards com status_impresso = false/null de ${cardsFromApi.length} recebidos da API`);
+      const cardsForPrinting = cardsFromApi.filter(card => !card.status_impresso || card.status_impresso === 'false' || card.status_impresso === null || card.status_impresso === undefined);
       let cards = cardsForPrinting;
       if (cards.length === 0) {
-        console.log('⚠️ Sem cards qualificados após filtragem da API. Verificando dados locais...');
         if (data && data.length > 0) {
-          const statusMap = data.reduce((acc, card) => {
-            const status = String(card.status_impresso);
-            acc[status] = (acc[status] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>);
-          console.log('🔍 Diagnóstico de status_impresso (dados locais):', statusMap);
-          const notPrintedCards = data.filter(card => card.status_impresso === false || card.status_impresso == null);
-          console.log(`🔍 Filtragem local: ${notPrintedCards.length} cards com status_impresso = false/null de ${data.length} total`);
+          const notPrintedCards = data.filter(card => !card.status_impresso || card.status_impresso === 'false' || card.status_impresso === null || card.status_impresso === undefined);
           if (notPrintedCards.length > 0) {
-            console.log('🖨️ Usando dados filtrados do Kanban para impressão: ', notPrintedCards.length);
             cards = notPrintedCards;
           } else {
             message.info('Não há cards com status_impresso = false ou null disponíveis.');
@@ -241,10 +171,6 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filteredData, 
           return;
         }
       }
-      
-      console.log('🖨️ Cards para impressão (final):', cards.length);
-      
-      // Processar a impressão
       await exportPrintableCardsService({
         cards,
         api,
@@ -252,7 +178,6 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filteredData, 
         setPrinting,
         options: printOptions
       });
-      
     } catch (err: any) {
       setPrinting(false);
       console.error('❌ Erro ao exportar para impressão:', err);

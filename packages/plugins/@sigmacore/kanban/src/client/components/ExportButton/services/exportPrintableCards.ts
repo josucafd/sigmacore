@@ -35,8 +35,6 @@ export async function exportPrintableCardsService({
       return;
     }
 
-    console.log('🖨️ Processando exportação de', cards.length, 'cards para impressão');
-
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       const errorMessage = 'Não foi possível abrir a janela de impressão. Verifique se os pop-ups estão permitidos.';
@@ -69,12 +67,12 @@ export async function exportPrintableCardsService({
           .print-card-product-image { height: 100%; width: 100%; object-fit: contain; }
           .print-card-no-image { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #64748b; }
           .print-card-info-section { padding: 12px; }
-          .print-card-details-adapted { font-size: 14px; color: #64748b; line-height: 1.2; }
+          .print-card-details-adapted { font-size: 16px; color: #64748b; line-height: 1.2; }
           .print-card-details-adapted > p { margin: 0 0 2px; }
           .detail-value-adapted { font-weight: 500; color: #1e293b; float: right; }
           .print-card-details-adapted p.detail-ref { font-size: 16px; font-weight: 500; color: #374151; margin-bottom: 4px; }
           .print-card-details-adapted p.detail-ref .detail-value-adapted { font-weight: 600; float: none; }
-          .print-card-details-adapted p:not(.detail-ref) { display: flex; justify-content: space-between; margin: 3px 0; line-height: 1.3; }
+          .print-card-details-adapted p:not(.detail-ref) { display: flex; margin: 3px 0; line-height: 1.3; }
           .print-controls { position: fixed; top: 20px; right: 20px; background: #1890ff; color: white; padding: 10px 20px; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); z-index: 1000; }
           .print-controls:hover { background: #096dd9; }
           .print-header { margin-bottom: 20px; text-align: center; }
@@ -164,19 +162,14 @@ export async function exportPrintableCardsService({
     printWindow.document.close();
 
     try {
-      console.log('🖨️ Marcando cards como impressos. IDs:', cards.map(c => c.id_programacao));
       const ids = cards.map(c => c.id_programacao);
       await api.request({ 
         url: 'programacoes:marcarImpresso', 
         method: 'POST', 
         data: { ids } 
       });
-      
-      console.log('✅ Cards marcados como impressos com sucesso');
       message.success(`${cards.length} cards marcados como impressos!`);
-      
       if (refreshPendingCount) {
-        console.log('🔄 Atualizando contagem de cards pendentes...');
         await refreshPendingCount();
       }
     } catch (apiError) {

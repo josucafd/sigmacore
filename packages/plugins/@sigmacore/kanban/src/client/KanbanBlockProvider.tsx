@@ -149,7 +149,7 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
           if (foundArray && foundArray.length > 0) {
             programacoes = foundArray;
           } else {
-            console.warn('❌ Nenhum array encontrado na resposta');
+            // console.warn('❌ Nenhum array encontrado na resposta');
           }
         }
         

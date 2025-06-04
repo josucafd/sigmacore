@@ -96,26 +96,61 @@ export const Card: React.FC<CardProps> = ({ data }) => {
     }
 
     try {
-      const targetDate = new Date(data_termino);
-      const today = new Date();
+      // Garantir que estamos trabalhando com strings de data no formato YYYY-MM-DD
+      const formatarData = (dataString: string): string => {
+        // Se a data já vier no formato ISO com tempo, extrair apenas a parte da data
+        if (dataString.includes('T')) {
+          return dataString.split('T')[0];
+        }
+        
+        // Se vier no formato BR (DD/MM/YYYY), converter para ISO
+        if (dataString.includes('/')) {
+          const [dia, mes, ano] = dataString.split('/').map(Number);
+          return `${ano}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+        }
+        
+        // Assumir que já está no formato YYYY-MM-DD
+        return dataString;
+      };
+
+      // Formatar a data de término para garantir consistência
+      const dataTerminoFormatada = formatarData(data_termino);
       
-      // Normaliza as datas para o início do dia
-      const targetStartOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
-      const todayStartOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      // Obter a data de hoje no formato YYYY-MM-DD
+      const hoje = new Date();
+      const hojeFormatada = `${hoje.getFullYear()}-${(hoje.getMonth() + 1).toString().padStart(2, '0')}-${hoje.getDate().toString().padStart(2, '0')}`;
       
-      // Calcula a diferença em dias
-      const diffTime = targetStartOfDay.getTime() - todayStartOfDay.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      // Converter para objetos Date usando o mesmo formato para ambos
+      const dataHoje = new Date(hojeFormatada + 'T00:00:00Z');
+      const dataTermino = new Date(dataTerminoFormatada + 'T00:00:00Z');
       
-      const ehHoje = diffDays === 0;
-      const emAtraso = diffDays < 0;
+      // Calcular a diferença em milissegundos
+      const diferencaMs = dataTermino.getTime() - dataHoje.getTime();
+      
+      // Converter para dias (86400000 = 24 * 60 * 60 * 1000)
+      const diferencaDias = Math.floor(diferencaMs / 86400000);
+      
+      // Para debug
+      console.log('DEBUG calcularDiasPrazo:', {
+        dataTermino: data_termino,
+        dataTerminoFormatada,
+        hojeFormatada,
+        dataHoje: dataHoje.toISOString(),
+        dataTerminoObj: dataTermino.toISOString(),
+        diferencaMs,
+        diferencaDias
+      });
+      
+      const ehHoje = diferencaDias === 0;
+      const emAtraso = diferencaDias < 0;
       
       return {
         emAtraso,
-        dias: Math.abs(diffDays),
+        dias: Math.abs(diferencaDias),
         ehHoje
       };
-    } catch {
+    } catch (error) {
+      console.error('Erro em calcularDiasPrazo:', error, { data_termino });
       return { emAtraso: false, dias: 0, ehHoje: false };
     }
   };
@@ -173,6 +208,7 @@ export const Card: React.FC<CardProps> = ({ data }) => {
       }}
       className={cardClasses}
       {...attributes}
+      {...listeners}
     >
       <div className="kanban-card-adapted">
         {/* Overlay de loading quando está sendo movido */}
@@ -251,19 +287,6 @@ export const Card: React.FC<CardProps> = ({ data }) => {
                 <p>Tipo: <span className="detail-value-adapted">{tipo_op}</span></p>
               )}
             </div>
-          </div>
-
-          {/* Controles do card */}
-          <div className="kanban-card-controls">
-            {/* Handle de drag */}
-            <Button 
-              type="text" 
-              icon={isMoving ? <LoadingOutlined spin /> : <DragOutlined />}
-              size="small"
-              className="kanban-card-drag-handle"
-              disabled={isMoving}
-              {...listeners}
-            />
           </div>
         </div>
       </div>
