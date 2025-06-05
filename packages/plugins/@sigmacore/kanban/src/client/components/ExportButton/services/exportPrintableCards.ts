@@ -164,9 +164,18 @@ export async function exportPrintableCardsService({
     try {
       const ids = cards.map(c => c.id_programacao);
       await api.request({ 
-        url: 'programacoes:marcarImpresso', 
+        url: 'tb_programacoes:update', 
         method: 'POST', 
-        data: { ids } 
+        params: {
+          filter: {
+            id_programacao: {
+              $in: ids
+            }
+          }
+        },
+        data: { 
+          status_impresso: true 
+        }
       });
       message.success(`${cards.length} cards marcados como impressos!`);
       if (refreshPendingCount) {

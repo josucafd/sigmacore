@@ -48,9 +48,20 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filteredData, 
     const checkAndRefreshIfNeeded = async () => {
       if (pendingCardCount === 0 && !checkingPending) {
         try {
-          const response = await api.request({ url: 'programacoes:paraImpressao', method: 'GET' });
+          const response = await api.request({ 
+            url: 'programacoes_kanban:list', 
+            method: 'GET',
+            params: {
+              paginate: false,
+              filter: {
+                status_impresso: {
+                  $eq: false
+                }
+              }
+            }
+          });
           let hasCardsInResponse = false;
-          if (response?.data?.data?.data && Array.isArray(response.data.data.data) && response.data.data.data.length > 0) {
+          if (response?.data?.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
             hasCardsInResponse = true;
           } else {
             const extractedCards = extractCardsFromResponse(response);
@@ -110,7 +121,18 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filteredData, 
   const handlePrintableCards = async () => {
     try {
       try {
-        const response = await api.request({ url: 'programacoes:paraImpressao', method: 'GET' });
+        const response = await api.request({ 
+          url: 'programacoes_kanban:list', 
+          method: 'GET',
+          params: {
+            paginate: false,
+            filter: {
+              status_impresso: {
+                $eq: false
+              }
+            }
+          }
+        });
         const apiCards = extractCardsFromResponse(response);
         if (apiCards && apiCards.length > 0) {
           setShowPrintOptions(true);
@@ -142,8 +164,16 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filteredData, 
     setShowPrintOptions(false);
     try {
       const response = await api.request({ 
-        url: 'programacoes:paraImpressao', 
-        method: 'GET' 
+        url: 'programacoes_kanban:list', 
+        method: 'GET',
+        params: {
+          paginate: false,
+          filter: {
+            status_impresso: {
+              $eq: false
+            }
+          }
+        }
       });
       let cardsFromApi: Programacao[] = [];
       if (response?.data?.data && Array.isArray(response.data.data)) {

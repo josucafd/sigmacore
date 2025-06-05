@@ -13,11 +13,19 @@ export const usePendingCards = () => {
     try {
       setCheckingPending(true);
       const response = await api.request({ 
-        url: 'programacoes:paraImpressao', 
-        method: 'GET' 
+        url: 'programacoes_kanban:list', 
+        method: 'GET',
+        params: {
+          paginate: false,
+          filter: {
+            status_impresso: {
+              $eq: false
+            }
+          }
+        }
       });
-      if (response?.data?.data?.data && Array.isArray(response.data.data.data)) {
-        const cards = response.data.data.data;
+      if (response?.data?.data && Array.isArray(response.data.data)) {
+        const cards = response.data.data;
         setPendingCardCount(cards.length);
         setCheckingPending(false);
         return;

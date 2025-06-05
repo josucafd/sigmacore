@@ -109,8 +109,12 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setError(null);
       
       const response = await api.request({
-        url: 'programacoes:kanbanData',
+        url: 'programacoes_kanban:list',
         method: 'GET',
+        params: {
+          paginate: false,
+          filter: {}
+        }
       });
       
       if (response && response.data) {
@@ -258,10 +262,12 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
       };
       
       await api.request({
-        url: `programacoes:updateDataTermino`,
+        url: `tb_programacoes:update`,
         method: 'POST',
         params: {
-          filterByTk: programacaoId,
+          filter: {
+            id_programacao: programacaoId,
+          },
         },
         data: apiPayload,
       });
