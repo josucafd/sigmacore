@@ -48,15 +48,39 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filteredData, 
     const checkAndRefreshIfNeeded = async () => {
       if (pendingCardCount === 0 && !checkingPending) {
         try {
-          const response = await api.request({ url: 'programacoes:paraImpressao', method: 'GET' });
-          let hasCardsInResponse = false;
-          if (response?.data?.data?.data && Array.isArray(response.data.data.data) && response.data.data.data.length > 0) {
-            hasCardsInResponse = true;
-          } else {
-            const extractedCards = extractCardsFromResponse(response);
-            hasCardsInResponse = extractedCards.length > 0;
-          }
-          if (hasCardsInResponse && pendingCardCount === 0) {
+          // Filtro melhorado para booleano false, string 'false' ou null
+          const filter = JSON.stringify({
+            "$or": [
+              { "status_impresso": { "$isTruly": false } },
+              { "status_impresso": { "$eq": "false" } },
+              { "status_impresso": { "$eq": null } }
+            ]
+          });
+          
+          const response = await api.request({ 
+            url: `programacoes_kanban:list`,
+            method: 'GET',
+            params: {
+              paginate: false,
+              filter: JSON.stringify({"status_impresso":{"$eq":false}})
+            }
+          });
+          
+          console.log('[DEBUG] Verificação de consistência - Resposta da API:', {
+            hasData: !!response?.data,
+            dataStructure: typeof response?.data,
+            dataDataExists: !!response?.data?.data,
+            isDataDataArray: Array.isArray(response?.data?.data),
+            dataLength: Array.isArray(response?.data?.data) ? response.data.data.length : 'não é array'
+          });
+          
+          // Usar a função centralizada para extrair os cards
+          const extractedCards = extractCardsFromResponse(response);
+          console.log('[DEBUG] Verificação de consistência - Cards extraídos:', extractedCards.length);
+          
+          // Se encontrou cards na API mas o contador está zerado, atualiza
+          if (extractedCards.length > 0 && pendingCardCount === 0) {
+            console.log('[DEBUG] Verificação de consistência - Atualizando contador de pendentes');
             refreshPendingCount();
           }
         } catch (err) {
@@ -110,8 +134,30 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filteredData, 
   const handlePrintableCards = async () => {
     try {
       try {
-        const response = await api.request({ url: 'programacoes:paraImpressao', method: 'GET' });
+        // Filtro melhorado para booleano false, string 'false' ou null
+        const filter = JSON.stringify({
+          "$or": [
+            { "status_impresso": { "$isTruly": false } },
+            { "status_impresso": { "$eq": "false" } },
+            { "status_impresso": { "$eq": null } }
+          ]
+        });
+        
+        const response = await api.request({ 
+          url: `programacoes_kanban:list`,
+          method: 'GET',
+          params: {
+            paginate: false,
+            filter: JSON.stringify({"status_impresso":{"$eq":false}})
+          }
+        });
+        
+        console.log('[DEBUG] handlePrintableCards: Resposta bruta da API:', response.data);
+        
+        // Usar a função centralizada para extrair os cards
         const apiCards = extractCardsFromResponse(response);
+        console.log('[DEBUG] handlePrintableCards: Cards extraídos:', apiCards.length);
+        
         if (apiCards && apiCards.length > 0) {
           setShowPrintOptions(true);
           return;
@@ -119,6 +165,8 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filteredData, 
       } catch (apiError) {
         console.error('❌ Erro ao buscar da API, verificando dados locais:', apiError);
       }
+      
+      // Fallback para dados locais
       if (data && data.length > 0) {
         const notPrintedCards = data.filter(card => 
           !card.status_impresso || card.status_impresso === 'false' || card.status_impresso === null || card.status_impresso === undefined
@@ -141,25 +189,55 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filteredData, 
     setPrinting(true);
     setShowPrintOptions(false);
     try {
-      const response = await api.request({ 
-        url: 'programacoes:paraImpressao', 
-        method: 'GET' 
+      // Filtro melhorado para booleano false, string 'false' ou null
+      const filter = JSON.stringify({
+        "$or": [
+          { "status_impresso": { "$isTruly": false } },
+          { "status_impresso": { "$eq": "false" } },
+          { "status_impresso": { "$eq": null } }
+        ]
       });
-      let cardsFromApi: Programacao[] = [];
-      if (response?.data?.data && Array.isArray(response.data.data)) {
-        cardsFromApi = response.data.data;
-      } else {
-        cardsFromApi = extractCardsFromResponse(response);
-      }
-      if (cardsFromApi.length > 0) {
-      }
-      const cardsForPrinting = cardsFromApi.filter(card => !card.status_impresso || card.status_impresso === 'false' || card.status_impresso === null || card.status_impresso === undefined);
+      
+      const response = await api.request({ 
+        url: `programacoes_kanban:list`,
+        method: 'GET',
+        params: {
+          paginate: false,
+          filter: JSON.stringify({"status_impresso":{"$eq":false}})
+        }
+      });
+      
+      console.log('[DEBUG] executePrintableCards: Resposta bruta da API:', response.data);
+      
+      // Usar a função centralizada para extrair e normalizar os cards
+      const cardsFromApi = extractCardsFromResponse(response);
+      console.log('[DEBUG] executePrintableCards: Cards extraídos:', cardsFromApi.length);
+      
+      // Double-check para garantir que só imprimimos cards não impressos
+      const cardsForPrinting = cardsFromApi.filter(card => 
+        card.status_impresso === false || 
+        card.status_impresso === 'false' || 
+        card.status_impresso === null || 
+        card.status_impresso === undefined
+      );
+      
+      console.log('[DEBUG] executePrintableCards: Cards filtrados para impressão:', cardsForPrinting.length);
+      
       let cards = cardsForPrinting;
+      
+      // Fallback para dados locais se não encontrou na API
       if (cards.length === 0) {
         if (data && data.length > 0) {
-          const notPrintedCards = data.filter(card => !card.status_impresso || card.status_impresso === 'false' || card.status_impresso === null || card.status_impresso === undefined);
+          const notPrintedCards = data.filter(card => 
+            !card.status_impresso || 
+            card.status_impresso === 'false' || 
+            card.status_impresso === null || 
+            card.status_impresso === undefined
+          );
+          
           if (notPrintedCards.length > 0) {
             cards = notPrintedCards;
+            console.log('[DEBUG] executePrintableCards: Usando cards locais:', cards.length);
           } else {
             message.info('Não há cards com status_impresso = false ou null disponíveis.');
             setPrinting(false);
@@ -171,6 +249,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filteredData, 
           return;
         }
       }
+      
       await exportPrintableCardsService({
         cards,
         api,

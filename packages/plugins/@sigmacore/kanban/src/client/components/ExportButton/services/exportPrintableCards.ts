@@ -163,14 +163,33 @@ export async function exportPrintableCardsService({
 
     try {
       const ids = cards.map(c => c.id_programacao);
-      await api.request({ 
-        url: 'programacoes:marcarImpresso', 
-        method: 'POST', 
-        data: { ids } 
-      });
-      message.success(`${cards.length} cards marcados como impressos!`);
-      if (refreshPendingCount) {
-        await refreshPendingCount();
+      
+      console.log('[DEBUG] Marcando cards como impressos, IDs:', ids);
+      
+      // Marcar cada card como impresso individualmente
+      const updatePromises = ids.map(id => 
+        api.request({ 
+          url: `programacoes_kanban:update?filterByTk=${id}`, 
+          method: 'POST', 
+          data: { status_impresso: true } 
+        })
+      );
+      
+      try {
+        const updateResults = await Promise.all(updatePromises);
+        console.log('[DEBUG] Resultado das atualizações:', updateResults.map(r => ({
+          success: !!r,
+          data: r?.data
+        })));
+        
+        message.success(`${cards.length} cards marcados como impressos!`);
+        
+        if (refreshPendingCount) {
+          await refreshPendingCount();
+        }
+      } catch (updateError) {
+        console.error('❌ Erro ao marcar cards como impressos:', updateError);
+        message.warning('Os cards foram impressos, mas não puderam ser marcados como impressos no sistema.');
       }
     } catch (apiError) {
       console.error('❌ Erro ao marcar cards como impressos:', apiError);

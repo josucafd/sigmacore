@@ -108,20 +108,34 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode; collecti
       setLoading(true);
       setError(null);
       
+      // Buscar dados do servidor sem paginação
       const response = await api.request({
-        url: collection,
+        url: `${collection}:list`,
         method: 'GET',
+        params: {
+          paginate: false,
+          filter: '{}'
+        }
+      });
+      
+      // Logging para depuração da estrutura da resposta
+      console.log('[DEBUG] KanbanBlockProvider - Resposta da API:', {
+        hasData: !!response?.data,
+        dataType: typeof response?.data,
+        hasDataData: !!response?.data?.data,
+        dataDataType: typeof response?.data?.data,
+        isDataDataArray: Array.isArray(response?.data?.data),
+        dataDataLength: Array.isArray(response?.data?.data) ? response.data.data.length : 'não é array',
+        hasResults: !!response?.data?.results,
+        resultsIsArray: Array.isArray(response?.data?.results)
       });
       
       if (response && response.data) {
         let programacoes: Programacao[] = [];
         
-        if (Array.isArray(response.data)) {
-          programacoes = response.data;
-        } else if (response.data.data && Array.isArray(response.data.data)) {
+        // Verificar a estrutura e extrair os dados corretamente
+        if (response.data.data && Array.isArray(response.data.data)) {
           programacoes = response.data.data;
-        } else if (response.data.data && response.data.data.data && Array.isArray(response.data.data.data)) {
-          programacoes = response.data.data.data;
         } else if (response.data.results && Array.isArray(response.data.results)) {
           programacoes = response.data.results;
         } else {
@@ -149,12 +163,36 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode; collecti
           if (foundArray && foundArray.length > 0) {
             programacoes = foundArray;
           } else {
-            // console.warn('❌ Nenhum array encontrado na resposta');
+            console.warn('❌ Nenhum array encontrado na resposta');
           }
         }
         
+        // Normalizar os dados dos cards
+        programacoes = programacoes.map(card => {
+          // Normalizar setores_atuais para garantir que sempre seja um array
+          if (typeof card.setores_atuais === 'string') {
+            try {
+              card.setores_atuais = JSON.parse(card.setores_atuais);
+            } catch {
+              card.setores_atuais = [card.setores_atuais];
+            }
+          } else if (!Array.isArray(card.setores_atuais)) {
+            card.setores_atuais = card.setores_atuais ? [card.setores_atuais] : [];
+          }
+          
+          // Normalizar status_impresso para garantir que seja booleano
+          if (card.status_impresso === 'true' || card.status_impresso === '1') {
+            card.status_impresso = true as any; // Casting necessário devido à tipagem
+          } else if (card.status_impresso === 'false' || card.status_impresso === '0') {
+            card.status_impresso = false as any; // Casting necessário devido à tipagem
+          }
+          
+          return card;
+        });
+        
         if (programacoes.length > 0) {
-          // Log dos primeiros registros para debug
+          console.log('[DEBUG] KanbanBlockProvider - Total de cards carregados:', programacoes.length);
+          console.log('[DEBUG] KanbanBlockProvider - Amostra do primeiro card:', programacoes[0]);
         }
         
         setData(programacoes);

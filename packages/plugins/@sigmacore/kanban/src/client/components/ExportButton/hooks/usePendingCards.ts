@@ -12,17 +12,39 @@ export const usePendingCards = () => {
     
     try {
       setCheckingPending(true);
-      const response = await api.request({ 
-        url: 'programacoes:paraImpressao', 
-        method: 'GET' 
+      
+      // Filtro melhorado para cards não impressos - combinando ambos os formatos possíveis
+      const filter = JSON.stringify({
+        "$or": [
+          { "status_impresso": { "$isTruly": false } },
+          { "status_impresso": { "$eq": "false" } },
+          { "status_impresso": { "$eq": null } }
+        ]
       });
-      if (response?.data?.data?.data && Array.isArray(response.data.data.data)) {
-        const cards = response.data.data.data;
-        setPendingCardCount(cards.length);
-        setCheckingPending(false);
-        return;
-      }
+      
+      // Fazer a chamada com parâmetros de query para garantir formato correto
+      const response = await api.request({ 
+        url: `programacoes_kanban:list`,
+        method: 'GET',
+        params: {
+          paginate: false,
+          filter: JSON.stringify({"status_impresso":{"$eq":false}})
+        }
+      });
+      
+      // Log detalhado para diagnóstico
+      console.log('[DEBUG] usePendingCards: Resposta da API:', {
+        hasData: !!response?.data,
+        dataIsArray: Array.isArray(response?.data),
+        dataDataExists: !!response?.data?.data,
+        dataDataIsArray: Array.isArray(response?.data?.data),
+        dataLength: Array.isArray(response?.data?.data) ? response.data.data.length : 'não é array'
+      });
+      
+      // Processamento padronizado com a função extractCardsFromResponse
       const cards = extractCardsFromResponse(response);
+      console.log('[DEBUG] usePendingCards: Cards extraídos:', cards.length);
+      
       setPendingCardCount(cards.length);
     } catch (error) {
       console.error('❌ Erro ao verificar cards pendentes:', error);
