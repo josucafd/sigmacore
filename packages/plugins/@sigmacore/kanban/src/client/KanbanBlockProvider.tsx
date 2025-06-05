@@ -13,6 +13,7 @@ export interface Programacao {
   referencia: string;
   tipo_op: string;
   status_impresso: string;
+  status_op?: string; // Status da operação (ex: 'EM PRODUÇÃO')
   foto_piloto_url?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -103,72 +104,43 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   // Função para buscar dados da API usando a nova action customizada
   const fetchData = useCallback(async () => {
-    console.log('🚀 fetchData iniciada');
     try {
       setLoading(true);
       setError(null);
       
-      console.log('📡 Fazendo requisição para API...');
       const response = await api.request({
-        url: 'programacoes:kanbanData',
+        url: 'programacoes_kanban:list',
         method: 'GET',
+        params: {
+          paginate: false,
+          filter: {}
+        }
       });
       
-      console.log('🔄 Dados recebidos da API:', response);
-      console.log('🔍 Estrutura detalhada da resposta:');
-      console.log('   - response.data:', response.data);
-      console.log('   - typeof response.data:', typeof response.data);
-      console.log('   - response.data.data:', response.data?.data);
-      console.log('   - typeof response.data.data:', typeof response.data?.data);
-      
-      // Verificar se a resposta tem a estrutura esperada
       if (response && response.data) {
-        // A resposta pode vir como response.data diretamente (array) ou response.data.data
         let programacoes: Programacao[] = [];
         
         if (Array.isArray(response.data)) {
-          // Caso onde response.data é o array direto
-          console.log('✅ Usando response.data como array direto');
           programacoes = response.data;
         } else if (response.data.data && Array.isArray(response.data.data)) {
-          // Caso onde response.data.data é o array
-          console.log('✅ Usando response.data.data como array direto');
           programacoes = response.data.data;
         } else if (response.data.data && response.data.data.data && Array.isArray(response.data.data.data)) {
-          // Caso onde response.data.data.data é o array (triplo aninhamento)
-          console.log('✅ Usando response.data.data.data como array');
           programacoes = response.data.data.data;
         } else if (response.data.results && Array.isArray(response.data.results)) {
-          // Caso alternativo onde response.data.results é o array
-          console.log('✅ Usando response.data.results como array');
           programacoes = response.data.results;
         } else {
-          console.warn('⚠️ Estrutura de resposta inesperada:', response.data);
-          console.warn('⚠️ Chaves disponíveis na resposta:', Object.keys(response.data));
-          
-          // Tentar encontrar o array em qualquer propriedade
           const findArrayDeep = (obj: any, depth: number = 0, maxDepth: number = 3): Programacao[] | null => {
             if (depth > maxDepth) return null;
             if (!obj || typeof obj !== 'object') return null;
             
-            // Verificar se o objeto atual é um array de programações
             if (Array.isArray(obj) && obj.length > 0 && obj[0] && 'id_programacao' in obj[0]) {
-              console.log(`✅ Encontrou array de programações em profundidade ${depth}`);
               return obj as Programacao[];
             }
             
-            // Procurar recursivamente em todas as propriedades
             for (const key in obj) {
-              console.log(`🔍 Verificando ${key} em profundidade ${depth}:`, 
-                Array.isArray(obj[key]) 
-                  ? `Array com ${obj[key].length} items` 
-                  : typeof obj[key]
-              );
-              
               if (typeof obj[key] === 'object' && obj[key] !== null) {
                 const result = findArrayDeep(obj[key], depth + 1, maxDepth);
                 if (result) {
-                  console.log(`✅ Encontrou array via recursão em ${key}`);
                   return result;
                 }
               }
@@ -179,35 +151,21 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
           
           const foundArray = findArrayDeep(response.data);
           if (foundArray && foundArray.length > 0) {
-            console.log(`✅ Encontrou array de programações via busca recursiva com ${foundArray.length} items`);
             programacoes = foundArray;
           } else {
-            console.warn('❌ Nenhum array encontrado na resposta');
+            // console.warn('❌ Nenhum array encontrado na resposta');
           }
         }
         
-        console.log(`📊 Carregando ${programacoes.length} programações na memória`);
-        
         if (programacoes.length > 0) {
           // Log dos primeiros registros para debug
-          programacoes.slice(0, 3).forEach(prog => {
-            console.log(`📋 Programação exemplo:`, {
-              id: prog.id_programacao,
-              idType: typeof prog.id_programacao,
-              ref: prog.referencia,
-              dataTermino: prog.data_termino
-            });
-          });
         }
         
-        console.log('💾 Definindo dados no state...');
         setData(programacoes);
         // Limpar estados visuais
         setMovingCards(new Set());
         setMovedCards(new Set());
-        console.log('✅ Dados definidos no state com sucesso');
       } else {
-        console.log('⚠️ Nenhum dado retornado da API');
         setData([]);
       }
     } catch (err) {
@@ -215,7 +173,6 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setError('Erro ao carregar dados das programações');
       setData([]);
     } finally {
-      console.log('🏁 fetchData finalizada, setLoading(false)');
       setLoading(false);
     }
   }, [api]);
@@ -225,8 +182,6 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
     try {
       // Garantir que temos uma data válida
       if (!date || isNaN(date.getTime())) {
-        console.error('❌ Data inválida para formatação:', date);
-        // Retornar data atual como fallback
         const today = new Date();
         return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
       }
@@ -237,14 +192,11 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
       const day = String(date.getDate()).padStart(2, '0');
       
       // Formato para o banco: YYYY-MM-DD (sem a parte do tempo - o servidor adiciona isso)
-      // Importante: o servidor parece estar rejeitando formatos com T e Z 
       const formattedDate = `${year}-${month}-${day}`;
       
-      console.log(`🗓️ Data formatada para o banco: ${formattedDate}`);
       return formattedDate;
     } catch (e) {
       console.error('❌ Erro ao formatar data para o banco:', e);
-      // Retornar data atual como fallback
       const today = new Date();
       return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     }
@@ -282,7 +234,6 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     if (!currentProgramacaoToMove) {
       console.error(`❌ Programação ${programacaoId} (tipo: ${typeof programacaoId}) não encontrada nos dados ANTES da atualização.`);
-      console.error(`📊 IDs disponíveis no estado 'data':`, data.map(p => ({ id: p.id_programacao, type: typeof p.id_programacao, ref: p.referencia })));
       throw new Error(`Programação ${programacaoId} não encontrada nos dados locais (pré-atualização)`);
     }
 
@@ -292,8 +243,6 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
     try {
       const newDate = calculateNewDate(targetWeekDay);
       
-      console.log(`🎯 Movendo programação ${programacaoId} (tipo: ${typeof programacaoId}) para ${targetWeekDay} (${newDate})`);
-      
       // 1. Marcar card como sendo movido (feedback visual)
       setMovingCards(prev => new Set(prev).add(programacaoId));
       
@@ -301,7 +250,6 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setData(prevData => {
         return prevData.map(prog => {
           if (compareIds(prog.id_programacao, programacaoId)) {
-            console.log(`🔄 Atualizando programação ${programacaoId} no estado local: ${prog.data_termino} → ${newDate}`);
             return { ...prog, data_termino: newDate };
           }
           return prog;
@@ -309,26 +257,21 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
       });
       
       // 3. Chamar API em background
-      console.log(`🌐 Chamando API para atualizar programação ${programacaoId}...`);
-      console.log(`📅 Data a ser enviada: ${newDate} (${typeof newDate})`);
-      
       const apiPayload = {
         data_termino: newDate,
       };
       
-      console.log(`📦 Payload para API:`, apiPayload);
-      
       await api.request({
-        url: `programacoes:updateDataTermino`,
+        url: `tb_programacoes:update`,
         method: 'POST',
         params: {
-          filterByTk: programacaoId,
+          filter: {
+            id_programacao: programacaoId,
+          },
         },
         data: apiPayload,
       });
 
-      console.log(`✅ Programação ${programacaoId} movida com sucesso para ${targetWeekDay} - API confirmou`);
-      
       // 4. Feedback visual de sucesso
       setMovingCards(prev => {
         const newSet = new Set(prev);
@@ -347,7 +290,6 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
         });
         
         // Recarregar dados do servidor para garantir sincronização
-        console.log(`🔄 Recarregando dados após movimentação bem-sucedida...`);
         fetchData();
       }, 2000);
       
@@ -355,11 +297,9 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
       console.error('❌ Erro ao mover programação:', error);
       
       // Revert to the captured original state
-      console.log(`🔄 Revertendo programação ${programacaoId} para estado original:`, originalProgramacaoState.data_termino);
       setData(prevData => {
         return prevData.map(prog => {
           if (compareIds(prog.id_programacao, programacaoId)) {
-            console.log(`🔄 Revertido no estado local: ${prog.data_termino} → ${originalProgramacaoState.data_termino}`);
             return { ...originalProgramacaoState }; // Use the captured full original state
           }
           return prog;
@@ -380,7 +320,6 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   // Buscar dados ao montar o componente
   useEffect(() => {
-    console.log('🔄 useEffect chamado, iniciando fetchData...');
     fetchData();
   }, [fetchData]);
 
@@ -407,72 +346,41 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   // Agora vamos usar os dados principais diretamente, sem movimentos locais temporários
   const dataWithLocalMovements = useMemo(() => {
-    console.log('🔄 Using main data directly:', {
-      dataLength: data.length,
-      forceRenderCounter,
-      sampleIds: data.slice(0, 3).map(p => ({ id: p.id_programacao, type: typeof p.id_programacao }))
-    });
-    
     return data;
   }, [data, forceRenderCounter]);
 
   // Filtrar dados apenas para a semana sendo exibida
   const dataForWeeklyView = useMemo(() => {
-    console.log('🔄 Calculando dataForWeeklyView');
-    console.log('📊 Total de dados brutos:', data.length);
-    
-    // Simplesmente retornar todos os dados - o filtro por semana será aplicado depois
-    console.log('📊 Dados para visualização semanal:', data.length);
     return data;
   }, [data]);
 
   const weekFilteredData = useMemo(() => {
-    console.log('🔄 Recalculating weekFilteredData');
-    console.log('📊 Dados de entrada para filtro semanal:', dataForWeeklyView.length);
-    console.log('📅 Semana atual:', weekNavigation.currentWeekStart.toISOString());
-    
-    // AGORA USA dataForWeeklyView
     const result = dataForWeeklyView.filter(prog => {
       if (!prog.data_termino) return false;
       const isInWeek = weekNavigation.isDateInCurrentDisplayWeek(prog.data_termino);
-      console.log(`${isInWeek ? '✅' : '❌'} Programação ${prog.id_programacao} - data: ${prog.data_termino} - na semana: ${isInWeek}`);
       return isInWeek;
     });
     
-    console.log('🔄 WeekFilteredData result:', result.length, 'programações na semana atual');
     return result;
   }, [dataForWeeklyView, weekNavigation.currentWeekStart, weekNavigation.isDateInCurrentDisplayWeek]);
 
   // Aplicar filtros de status aos dados da semana
   const filteredData = useMemo(() => {
-    console.log('🔄 Recalculating filteredData');
-    console.log('📊 Dados de entrada para filtro de status:', weekFilteredData.length);
-    console.log('🏷️ Filtros selecionados:', selectedStatuses);
-    
     if (selectedStatuses.length === 0) {
-      console.log('✅ Nenhum filtro selecionado, retornando todos os dados da semana');
       return weekFilteredData; // Se nenhum filtro selecionado, retorna todos os dados da semana
     }
 
     const result = weekFilteredData.filter(prog => {
       const progStatuses = getAllStatusValues(prog.setores_atuais);
-      console.log(`📋 Programação ${prog.id_programacao} - status: ${JSON.stringify(progStatuses)}`);
-      // Verifica se pelo menos um dos status da programação está nos filtros selecionados
       const matches = progStatuses.some(status => selectedStatuses.includes(status));
-      console.log(`${matches ? '✅' : '❌'} Programação ${prog.id_programacao} - match: ${matches}`);
       return matches;
     });
     
-    console.log('🔄 FilteredData result:', result.length, 'programações após filtro de status');
     return result;
   }, [weekFilteredData, selectedStatuses]);
 
   // Organizar dados filtrados por dia da semana (apenas segunda a sexta)
   const columns = useMemo(() => {
-    console.log('🔄 Recalculating columns');
-    console.log('📊 Dados de entrada para colunas:', filteredData.length);
-    console.log('📅 Dias da semana disponíveis:', weekNavigation.weekDays.map(d => d.weekDay));
-    
     // Cores para cada dia da semana
     const weekDayColors = {
       'segunda-feira': '#e6f7ff',   // Azul claro
@@ -484,17 +392,12 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     // Usar os dias da semana do hook de navegação (segunda a sexta)
     const result = weekNavigation.weekDays.map((dayInfo) => {
-      console.log(`📅 Processando dia: ${dayInfo.weekDay} (${dayInfo.date.toISOString()})`);
-      
       // Filtrar dados por dia da semana - filteredData já está pré-filtrado (sem atrasados, atual/futuro)
       const filteredDataByDay = filteredData.filter(prog => {
         const progWeekDay = weekNavigation.getWeekDayFromDate(prog.data_termino);
         const matches = progWeekDay === dayInfo.weekDay;
-        console.log(`${matches ? '✅' : '❌'} Programação ${prog.id_programacao} - data: ${prog.data_termino} - dia calculado: ${progWeekDay} - alvo: ${dayInfo.weekDay}`);
         return matches;
       });
-
-      console.log(`📊 Dia ${dayInfo.weekDay}: ${filteredDataByDay.length} programações`);
 
       return {
         id: dayInfo.weekDay,
@@ -506,7 +409,6 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
       };
     });
     
-    console.log('🔄 Columns result:', result.map(col => `${col.id}: ${col.cards.length} cards`));
     return result;
   }, [filteredData, weekNavigation.weekDays, weekNavigation.getWeekDayFromDate]);
 
@@ -553,14 +455,6 @@ export const KanbanBlockProvider: React.FC<{ children: React.ReactNode }> = ({ c
     showOverdueSection,
     toggleOverdueSection,
   };
-
-  console.log('🎯 KanbanBlockProvider - contextValue:', {
-    dataCount: data.length,
-    filteredDataCount: filteredData.length,
-    columnsCount: columns.length,
-    movingCards: Array.from(movingCards),
-    movedCards: Array.from(movedCards)
-  });
 
   return (
     <KanbanBlockContext.Provider value={contextValue}>

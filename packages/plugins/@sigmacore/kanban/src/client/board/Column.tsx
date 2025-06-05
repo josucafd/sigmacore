@@ -19,7 +19,7 @@ export const Column: React.FC<ColumnProps> = ({
   backgroundColor = '#ffffff',
   isToday = false
 }) => {
-  console.log(`📊 Column ${title} - data:`, data);
+  // console.log(`📊 Column ${title} - data:`, data);
 
   // Configurar como área de drop
   const { isOver, setNodeRef } = useDroppable({

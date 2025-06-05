@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Spin, Alert, Button, message, Badge, Empty } from 'antd';
 import { ReloadOutlined, DownCircleOutlined, UpCircleOutlined, RightOutlined } from '@ant-design/icons';
 import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core';
@@ -33,6 +33,13 @@ export const Board: React.FC = () => {
 
   const [viewMode, setViewMode] = useState<ViewMode>('weekly');
 
+  // Definir título da página dinamicamente
+  useEffect(() => {
+    document.title = viewMode === 'monthly'
+      ? 'Kanban de Produção - Mensal'
+      : 'Kanban de Produção - Semanal';
+  }, [viewMode]);
+
   // Hook para gerenciar drag & drop simplificado
   const {
     activeId,
@@ -50,7 +57,6 @@ export const Board: React.FC = () => {
         duration: 3,
         key: `move-${programacaoId}`, // Evita duplicar mensagens
       });
-      console.log(`✅ Sucesso: Programação ${programacaoId} movida para ${targetWeekDay}`);
     },
     onError: (errorMessage) => {
       message.error({
@@ -60,8 +66,6 @@ export const Board: React.FC = () => {
       });
     }
   });
-
-  console.log('📋 Board - columns:', columns, 'loading:', loading, 'error:', error);
 
   if (loading) {
     return (
