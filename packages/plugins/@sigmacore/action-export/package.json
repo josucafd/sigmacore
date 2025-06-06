@@ -1,0 +1,14 @@
+{
+  "name": "@sigmacore/action-export",
+  "version": "0.1.0",
+  "main": "dist/server/index.js",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "lodash": "^4.17.21"
+  },
+  "peerDependencies": {
+    "@nocobase/client": "1.x",
+    "@nocobase/server": "1.x",
+    "@nocobase/test": "1.x"
+  }
+}

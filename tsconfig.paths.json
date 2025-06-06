@@ -4,6 +4,15 @@
       "@@/*": [
         ".dumi/tmp/*"
       ],
+      "@sigmacore/action-export/client": [
+        "packages/plugins/@sigmacore/action-export/src/client"
+      ],
+      "@sigmacore/action-export/package.json": [
+        "packages/plugins/@sigmacore/action-export/package.json"
+      ],
+      "@sigmacore/action-export": [
+        "packages/plugins/@sigmacore/action-export/src"
+      ],
       "@sigmacore/kanban/client": [
         "packages/plugins/@sigmacore/kanban/src/client"
       ],

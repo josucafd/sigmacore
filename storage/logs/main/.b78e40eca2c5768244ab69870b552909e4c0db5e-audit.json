@@ -29,6 +29,11 @@
             "date": 1749143977908,
             "name": "/root/www/my-nocobase-app/storage/logs/main/system_2025-06-05.log",
             "hash": "727d0c9a79f2cc6c8897bb411216cbd4040b93ce71cdb208d8322ef746711501"
+        },
+        {
+            "date": 1749205879458,
+            "name": "/root/www/my-nocobase-app/storage/logs/main/system_2025-06-06.log",
+            "hash": "b054dbb5c09e64c3baeb753c3e3765f20346725c43b9fc9405e53245cc3957a1"
         }
     ],
     "hashType": "sha256"
